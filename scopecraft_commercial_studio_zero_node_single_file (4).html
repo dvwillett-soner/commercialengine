@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScopeCraft — Agency Commercial Studio</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💼</text></svg>" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            zinc: {
+              850: '#1e1e22',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Production React & ReactDOM (No Babel Needed for pure JS execution) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+
+  <!-- Styled SheetJS for Excel Exports with custom fills, borders & formulas -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 antialiased selection:bg-amber-500/20 selection:text-amber-200 min-h-screen">
+  <div id="root"></div>
+
+  <script>
+    const { useState, useMemo, useEffect, useRef, createElement: h } = React;
+
+    // --- Inline SVG Icons ---
+    function Icon({ name, className = "w-4 h-4" }) {
+      const paths = {
+        spreadsheet: [
+          h('path', { key: '1', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+          h('polyline', { key: '2', points: '14 2 14 8 20 8', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+          h('line', { key: '3', x1: '8', y1: '13', x2: '16', y2: '13', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '4', x1: '8', y1: '17', x2: '16', y2: '17', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        sparkles: [
+          h('path', { key: '1', d: 'm12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' })
+        ],
+        plus: [
+          h('line', { key: '1', x1: '12', y1: '5', x2: '12', y2: '19', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '2', x1: '5', y1: '12', x2: '19', y2: '12', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        trash: [
+          h('polyline', { key: '1', points: '3 6 5 6 21 6', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('path', { key: '2', d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        download: [
+          h('path', { key: '1', d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('polyline', { key: '2', points: '7 10 12 15 17 10', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+          h('line', { key: '3', x1: '12', y1: '15', x2: '12', y2: '3', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        sliders: [
+          h('line', { key: '1', x1: '4', y1: '21', x2: '4', y2: '14', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '2', x1: '4', y1: '10', x2: '4', y2: '3', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '3', x1: '12', y1: '21', x2: '12', y2: '12', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '4', x1: '12', y1: '8', x2: '12', y2: '3', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '5', x1: '20', y1: '21', x2: '20', y2: '16', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '6', x1: '20', y1: '12', x2: '20', y2: '3', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        check: [
+          h('path', { key: '1', d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('polyline', { key: '2', points: '22 4 12 14.01 9 11.01', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' })
+        ],
+        x: [
+          h('line', { key: '1', x1: '18', y1: '6', x2: '6', y2: '18', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('line', { key: '2', x1: '6', y1: '6', x2: '18', y2: '18', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        calculator: [
+          h('rect', { key: '1', x: '4', y: '2', width: '16', height: '20', rx: '2', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '2', x1: '8', y1: '6', x2: '16', y2: '6', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        search: [
+          h('circle', { key: '1', cx: '11', cy: '11', r: '8', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '2', x1: '21', y1: '21', x2: '16.65', y2: '16.65', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        layers: [
+          h('polygon', { key: '1', points: '12 2 2 7 12 12 22 7 12 2', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinejoin: 'round' }),
+          h('polyline', { key: '2', points: '2 17 12 22 22 17', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinejoin: 'round' }),
+          h('polyline', { key: '3', points: '2 12 12 17 22 12', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinejoin: 'round' })
+        ],
+        upload: [
+          h('path', { key: '1', d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' }),
+          h('polyline', { key: '2', points: '17 8 12 3 7 8', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+          h('line', { key: '3', x1: '12', y1: '3', x2: '12', y2: '15', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        refresh: [
+          h('path', { key: '1', d: 'M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' })
+        ],
+        alert: [
+          h('circle', { key: '1', cx: '12', cy: '12', r: '10', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '2', x1: '12', y1: '8', x2: '12', y2: '12', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '3', x1: '12', y1: '16', x2: '12.01', y2: '16', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        archive: [
+          h('polyline', { key: '1', points: '21 8 21 21 3 21 3 8', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('rect', { key: '2', x: '1', y: '3', width: '22', height: '5', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '3', x1: '10', y1: '12', x2: '14', y2: '12', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        folder: [
+          h('path', { key: '1', d: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round' })
+        ],
+        dollar: [
+          h('line', { key: '1', x1: '12', y1: '1', x2: '12', y2: '23', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('path', { key: '2', d: 'M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        trend: [
+          h('polyline', { key: '1', points: '23 6 13.5 15.5 8.5 10.5 1 18', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('polyline', { key: '2', points: '17 6 23 6 23 12', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        clock: [
+          h('circle', { key: '1', cx: '12', cy: '12', r: '10', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('polyline', { key: '2', points: '12 6 12 12 16 14', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        back: [
+          h('line', { key: '1', x1: '19', y1: '12', x2: '5', y2: '12', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('polyline', { key: '2', points: '12 19 5 12 12 5', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        save: [
+          h('path', { key: '1', d: 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('polyline', { key: '2', points: '17 21 17 13 7 13 7 21', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('polyline', { key: '3', points: '7 3 7 8 15 8', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ],
+        chart: [
+          h('line', { key: '1', x1: '18', y1: '20', x2: '18', y2: '10', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '2', x1: '12', y1: '20', x2: '12', y2: '4', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }),
+          h('line', { key: '3', x1: '6', y1: '20', x2: '6', y2: '14', fill: 'none', stroke: 'currentColor', strokeWidth: '2' })
+        ]
+      };
+
+      return h('svg', {
+        viewBox: '0 0 24 24',
+        className: className,
+        style: { display: 'inline-block', verticalAlign: 'middle' }
+      }, paths[name] || paths.spreadsheet);
+    }
+
+    // --- Master Agency Rate Card Reference (UAE Rates in AED) ---
+    const AGENCY_RATE_CARD = [
+      { id: 'strat-1', category: 'Strategy & Communications', item: 'Integrated Comms Strategy - 4 pillars (Internal/External)', description: 'Develop overall integrated communications strategy, 4 pillars (Internal and External) including:\n• Development of up to 4 communications campaigns\n• Developing preliminary communications plan\n• Development of communications calendar\n• Metrics and performance measurement', hours: 144, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 118800 },
+      { id: 'strat-2', category: 'Strategy & Communications', item: 'Integrated Comms Strategy - Internal/External', description: 'Develop overall integrated communications strategy, Internal/External including:\n• Development of up to 2 communications campaigns\n• Developing preliminary communications plan\n• Development of communications calendar\n• Metrics and performance measurement', hours: 120, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 99000 },
+      { id: 'strat-3', category: 'Strategy & Communications', item: 'External Strategy', description: 'Develop communications strategy (External) including:\n• Development of up to 2 communications campaigns\n• Development of communications plan\n• Development of communications calendar\n• Metrics and performance measurement', hours: 96, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 79200 },
+      { id: 'strat-4', category: 'Strategy & Communications', item: 'Internal Comms Strategy', description: 'Develop communications strategy (Internal) including:\n• Development of up to 2 communications campaigns\n• Developing preliminary communications plan\n• Development of communications calendar\n• Metrics and performance measurement', hours: 72, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 59400 },
+      { id: 'strat-5', category: 'Strategy & Communications', item: 'Stakeholder Mapping', description: '• Mapping and identification of internal and external key stakeholders/influencers/accounts\n• Development of stakeholder engagement plan', hours: 36, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 29700 },
+      { id: 'strat-6', category: 'Strategy & Communications', item: 'Key Message Development', description: 'Development of high-level messaging framework for the leadership, including 2-3 sets of messaging', hours: 24, hourlyRate: 900, seniority: 'Senior', fixedDeliverablePrice: 23760 },
+      { id: 'strat-7', category: 'Strategy & Communications', item: 'Narrative and Key Message Development', description: 'Development of overall storyline and narrative mapping framework (themes, sub-themes, audience segmentation, narratives)', hours: 48, hourlyRate: 900, seniority: 'Senior', fixedDeliverablePrice: 47520 },
+      { id: 'strat-8', category: 'Strategy & Communications', item: 'Internal Communication Content Development', description: 'Drafting of 1 internal campaign narrative/comms', hours: 8, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 2640 },
+      { id: 'pr-1', category: 'PR & Media Relations', item: 'Press Release & Distribution (UAE)', description: 'Drafting of 1 PR/op-ed (500-600 words) per press release in one world-wide language. Arabic translation, local media distribution (PR Newswire standard newsfeed for United Arab Emirates) and development of one media coverage report.', hours: 25, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 8250 },
+      { id: 'pr-2', category: 'PR & Media Relations', item: 'Press Release & Distribution (GCC)', description: 'Drafting of 1 PR/op-ed (500-600 words) per press release in one world-wide language. Arabic translation, local media distribution (PR Newswire standard newsfeed for GCC countries) and development of one media coverage report.', hours: 35, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 11550 },
+      { id: 'pr-3', category: 'PR & Media Relations', item: 'Op-ed Development and Distribution', description: 'Drafting of 1 opinion piece (600 words in one language). Pitch to media for distribution and media monitor current to the issue on the subject in real time and development of 1 coverage report', hours: 37, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 12210 },
+      { id: 'pr-4', category: 'PR & Media Relations', item: 'Reactive/Crisis Communication', description: 'Drafting of position paper/reactive holding response for speech topic', hours: 8, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 2640 },
+      { id: 'pr-5', category: 'PR & Media Relations', item: 'Speech Development', description: 'Drafting of 1 keynote speech (up to 1,500 words in one language)', hours: 20, hourlyRate: 450, seniority: 'Senior', fixedDeliverablePrice: 9900 },
+      { id: 'pr-6', category: 'PR & Media Relations', item: 'Media Interview (Tier 1)', description: 'Management of 1 interview (face to face/broadcast) with a Tier 1 news outlet, including media briefing notes, on-site assistance and summary of the interview', hours: 12, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 6600 },
+      { id: 'pr-7', category: 'PR & Media Relations', item: 'Media Interview (Tier 2)', description: 'Management of 1 interview (face to face/broadcast) with a Tier 2 news outlet, including media briefing notes, on-site assistance and summary of the interview', hours: 10, hourlyRate: 500, seniority: 'Mid', fixedDeliverablePrice: 5500 },
+      { id: 'event-1', category: 'Event Support', item: 'Event Support (Small)', description: 'Pre-inclusion in media invitation list and media pitching, Q&A, media alert.\nOn-site support for media registration and media facilitation, and on-ground support of 2 PR staff members.', hours: 36, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 19800 },
+      { id: 'event-2', category: 'Event Support', item: 'Event Support (Medium)', description: 'Pre-inclusion in media invitation list and media pitching, Q&A, media alert.\nOn-site support for media registration and facilitation; 2 PR staff.', hours: 48, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 26400 },
+      { id: 'event-3', category: 'Event Support', item: 'Event Support (Large)', description: 'Pre-inclusion in media invitation list and media pitching, Q&A, media alert.\nOn-site facilitation and on-ground support of 2 PR staff members.', hours: 73, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 40150 },
+      { id: 'content-1', category: 'Content & Editorial', item: 'Website Content Development', description: 'Development of up to 6,000 words in one language (English or Arabic); copy editing and final proofread.', hours: 120, hourlyRate: 350, seniority: 'Senior', fixedDeliverablePrice: 46200 },
+      { id: 'content-2', category: 'Content & Editorial', item: 'Annual Report Content Development', description: 'Drafting master copy (double-sided layout) up to 10,000 words in one language.', hours: 180, hourlyRate: 350, seniority: 'Senior', fixedDeliverablePrice: 69300 },
+      { id: 'content-3', category: 'Content & Editorial', item: 'Newsletter Content Development', description: 'Drafting content (3 articles/templates up to 1,000 words for each language).', hours: 24, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 9240 },
+      { id: 'train-1', category: 'Crisis & Training', item: 'Media Training', description: '• Training session for 2-4 spokespersons in one medium (Arabic or English).\n• 4 hours face-to-face workshop, feedback report and action plan.', hours: 24, hourlyRate: 950, seniority: 'Senior', fixedDeliverablePrice: 25080 },
+      { id: 'crisis-1', category: 'Crisis & Training', item: 'Crisis Comms Manual', description: 'Detailed manual tailored for up to 5 critical scenarios, escalation protocols, spokesperson matrix, pre-drafted holding statements.', hours: 144, hourlyRate: 850, seniority: 'Senior', fixedDeliverablePrice: 134640 },
+      { id: 'crisis-2', category: 'Crisis & Training', item: 'Crisis Communication Drill (Desktop)', description: 'Desktop simulation exercise: real-time crisis escalation scenario simulation (2-4 hours) tested with executive committee.', hours: 12, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 6600 },
+      { id: 'crisis-3', category: 'Crisis & Training', item: 'Crisis Communication', description: 'Integrated crisis response team deployment, dedicated counsel, press monitoring, and active stakeholder briefings.', hours: 18, hourlyRate: 900, seniority: 'Senior', fixedDeliverablePrice: 17820 },
+      { id: 'res-1', category: 'Strategy & Communications', item: 'Research, Analysis and Benchmarking', description: 'Research analysis and comprehensive audit report on topic/industry in light of strategic comms.', hours: 32, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 26400 },
+      { id: 'mkt-1', category: 'Content & Editorial', item: 'Marketing Collateral Content', description: 'Drafting copywriting/content for brochures, presentations, web copy (up to 2,000 words).', hours: 14, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 4620 },
+      { id: 'int-1', category: 'Strategy & Communications', item: 'Internal Campaign', description: 'Internal communication content for all staff (videos, articles, visual assets) with internal comms plan.', hours: 36, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 13860 },
+      { id: 'wp-1', category: 'Content & Editorial', item: 'White Paper Development', description: 'White papers: comprehensive research, writing and editorial review (up to 3,500 words).', hours: 35, hourlyRate: 450, seniority: 'Senior', fixedDeliverablePrice: 17325 },
+      { id: 'plan-1', category: 'Strategy & Communications', item: 'Communication Plan for New Building/Campus Launch', description: 'Developing communication narrative for new campaign/campus launch including PR executions.', hours: 35, hourlyRate: 450, seniority: 'Senior', fixedDeliverablePrice: 17325 },
+      { id: 'award-1', category: 'PR & Media Relations', item: 'Award Submission', description: 'Content for 1 award submission of up to 2,000 words in one language.', hours: 12, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 6600 },
+      { id: 'soc-1', category: 'Social Media', item: 'Digital Site Audit', description: 'Social audit and social media plan per account community.', hours: 36, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 29700 },
+      { id: 'soc-2', category: 'Social Media', item: 'Digital Playbook Construction', description: 'Social media playbook development: content pillars, tonality, look and feel, response matrix.', hours: 48, hourlyRate: 750, seniority: 'Senior', fixedDeliverablePrice: 39600 },
+      { id: 'soc-3', category: 'Social Media', item: 'Content Page', description: 'Social content creation: up to 10 visual assets/captions.', hours: 1, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 330 },
+      { id: 'soc-4', category: 'Social Media', item: 'Performance Report', description: 'Performance & listening report: monthly tracking, sentiment, engagement analysis.', hours: 4, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1320 },
+      { id: 'soc-5', category: 'Social Media', item: 'Influencer Management', description: 'Social influencer management & commercial negotiation fee.', hours: 18, hourlyRate: 500, seniority: 'Senior', fixedDeliverablePrice: 9900 },
+      { id: 'soc-6', category: 'Social Media', item: 'Listening Report', description: 'Social media listening report and competitor analysis (up to 20 keywords/handles).', hours: 16, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 5280 },
+      { id: 'des-1', category: 'Design & Production', item: 'Digital Screen Content', description: 'Design content for digital screens (static/motion) in one language up to 5 screens.', hours: 8, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 2640 },
+      { id: 'des-2', category: 'Design & Production', item: 'Campaign Creation', description: 'Creative concept for brand/campaign: creative consideration, copy/visual direction.', hours: 54, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 17820 },
+      { id: 'des-3', category: 'Design & Production', item: 'Creative Adaptation - Ad', description: 'Adaptation of creative concept to master ad formats (1 master ad size).', hours: 5, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1650 },
+      { id: 'des-4', category: 'Design & Production', item: 'BTL Concepts - Campaign', description: 'Creation of BTL concept; activation idea with visuals (mockups/storyboards).', hours: 10, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 3300 },
+      { id: 'des-5', category: 'Design & Production', item: 'BTL Concepts - One-off', description: 'Creation of one-off BTL concept; activation idea with visuals.', hours: 13, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 4290 },
+      { id: 'des-6', category: 'Design & Production', item: 'Corporate Logo', description: 'Corporate logo with brand identity guidelines & style asset kit.', hours: 36, hourlyRate: 350, seniority: 'Senior', fixedDeliverablePrice: 13860 },
+      { id: 'des-7', category: 'Design & Production', item: 'Stationery Application', description: 'Stationery application (folder, letterhead, business card).', hours: 15, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 4950 },
+      { id: 'des-8', category: 'Design & Production', item: 'Additional Application', description: 'Additional brand collateral applications.', hours: 3, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 990 },
+      { id: 'des-9', category: 'Design & Production', item: 'Flyer/Leaflet', description: 'Flyer/leaflet design: 1-2 pages in 1 language.', hours: 7, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 2310 },
+      { id: 'des-10', category: 'Design & Production', item: 'Postcard', description: 'Double-sided postcard in one language.', hours: 3, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 990 },
+      { id: 'des-11', category: 'Design & Production', item: 'Brochure/Newsletter Design - Small', description: 'Design of 4-page layout (A4/letter) including layout/design.', hours: 14, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 4620 },
+      { id: 'des-12', category: 'Design & Production', item: 'Brochure Design - Big', description: 'Design of brochure content (12-16 pages, 1 language) with image sourcing.', hours: 37, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 12210 },
+      { id: 'des-13', category: 'Design & Production', item: 'Flyer Design', description: 'Design of flyer (single sided, size: 210 x 297mm/DL) in one language.', hours: 5, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1650 },
+      { id: 'des-14', category: 'Design & Production', item: 'Packaging Design', description: 'Packaging design of pack for 2 variants of products.', hours: 24, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 7920 },
+      { id: 'des-15', category: 'Design & Production', item: 'Badge Design', description: 'Design of 2 badges.', hours: 4, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1320 },
+      { id: 'des-16', category: 'Design & Production', item: 'Poster Design', description: 'Design of poster.', hours: 8, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 2640 },
+      { id: 'des-17', category: 'Design & Production', item: 'Brochure Design', description: 'Brochure of 4-8 pages.', hours: 23, hourlyRate: 300, seniority: 'Mid', fixedDeliverablePrice: 7590 },
+      { id: 'des-18', category: 'Design & Production', item: 'Design of Stickers', description: 'Design of stickers, badges, banners pack.', hours: 2, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 660 },
+      { id: 'des-19', category: 'Design & Production', item: 'Design of Window Display', description: 'Design of 2x the window display.', hours: 7, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 2310 },
+      { id: 'des-20', category: 'Design & Production', item: 'Site Additional', description: 'Additional web screen design.', hours: 3, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 990 },
+      { id: 'des-21', category: 'Design & Production', item: 'Design of Billboard', description: 'Design of large-format outdoor billboard (mockup/artwork).', hours: 12, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 3960 },
+      { id: 'des-22', category: 'Design & Production', item: 'Design of Event', description: 'Design of stage backdrop, roll-up banner pack, totem unit.', hours: 8, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 2640 },
+      { id: 'des-23', category: 'Design & Production', item: 'Design of Screen', description: 'Design of screen, backdrop, roll-up, lamp-post banner.', hours: 6, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1980 },
+      { id: 'des-24', category: 'Design & Production', item: 'Brand Architecture Concept', description: 'Full brand architecture framework and layout guide for master/sub-brands.', hours: 66, hourlyRate: 300, seniority: 'Senior', fixedDeliverablePrice: 21780 },
+      { id: 'des-25', category: 'Design & Production', item: 'PPT Design', description: 'Design of master PowerPoint presentation master template (up to 12 slides).', hours: 18, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 5940 },
+      { id: 'des-26', category: 'Design & Production', item: 'PPT Design - Images/VO', description: 'Multi-screen presentation balancing 3D images + PPT up to 20 slides.', hours: 16, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 5280 },
+      { id: 'photo-1', category: 'Photography & Video', item: 'Event Coverage - Full Day', description: 'Full-day event coverage (up to 8 hours). 2x photographers, standard event workflow.', hours: 18, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 6930 },
+      { id: 'photo-2', category: 'Photography & Video', item: 'Half Day Studio Photography', description: 'Half-day studio photoshoot (up to 4 hours). 1x cameraman, one camera/operator and light pack.', hours: 12, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 4620 },
+      { id: 'photo-3', category: 'Photography & Video', item: 'Half Day Outdoor Photography', description: 'Half-day outdoor photoshoot (up to 4 hours). 1x cameraman, one camera/operator and light pack.', hours: 12, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 4620 },
+      { id: 'photo-4', category: 'Photography & Video', item: 'Corporate Photo Retouching', description: 'Corporate photo retouching, color grading and crop.', hours: 2, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 660 },
+      { id: 'photo-5', category: 'Photography & Video', item: 'Photography - Full Day', description: 'Full-day photography shoot and retouching up to 25 images; one camera/operator.', hours: 26, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 10010 },
+      { id: 'video-1', category: 'Photography & Video', item: 'Full Day Shoot', description: 'Full-day corporate videography and audio capture (up to 8 hours); sound/lighting gear.', hours: 36, hourlyRate: 350, seniority: 'Senior', fixedDeliverablePrice: 13860 },
+      { id: 'video-2', category: 'Photography & Video', item: 'Half Day Shoot', description: 'Half-day corporate videography and audio capture (up to 4 hours); gear and cameraman.', hours: 18, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 6930 },
+      { id: 'video-3', category: 'Photography & Video', item: 'Editing and Cut Footage', description: 'Video edit and cut footage (up to 2 minutes in duration).', hours: 14, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 5390 },
+      { id: 'des-27', category: 'Design & Production', item: 'Infographic Animation', description: 'Delivery of 1 infographic animation (1 to 2 mins) in one language.', hours: 14, hourlyRate: 350, seniority: 'Mid', fixedDeliverablePrice: 5390 },
+      { id: 'des-28', category: 'Design & Production', item: 'Infographics - Medium', description: 'Built-in infographic layout/illustration in 1 language.', hours: 5, hourlyRate: 300, seniority: 'Junior', fixedDeliverablePrice: 1650 }
+    ];
+
+    const CURRENCY_SYMBOL = 'AED ';
+
+    const SAMPLE_BRIEFS = [
+      {
+        label: "Integrated Comms & Launch",
+        client: "Abu Dhabi Investment Council",
+        timeline: "8 Weeks",
+        text: "Deliver an integrated communications strategy across 4 pillars (Internal and External), full stakeholder mapping, bilingual Arabic/English press release distribution across the UAE, executive speech development for the keynote launch, and high-impact event PR support."
+      },
+      {
+        label: "Crisis Preparedness & Training",
+        client: "Emirates Logistics Group",
+        timeline: "4 Weeks",
+        text: "Develop a bespoke corporate crisis communications manual with escalation protocols across 5 critical scenarios, create executive holding statements and spokesperson allocation matrix, followed by intensive media training for 4 designated spokespersons."
+      },
+      {
+        label: "Brand Identity & Content Hub",
+        client: "Alpha Energy Solutions",
+        timeline: "6 Weeks",
+        text: "Design corporate logo with brand architecture guidelines, stationery suite, master 12-slide PowerPoint presentation template, digital website copywriting (up to 6,000 words), and corporate video editing for digital screens."
+      }
+    ];
+
+    const INITIAL_RECORDS = [
+      {
+        id: 'comm-rec-1',
+        clientName: 'Abu Dhabi Investment Council',
+        timeline: '8 Weeks',
+        createdAt: '2026-10-18T09:30:00.000Z',
+        status: 'Approved',
+        itemsCount: 8,
+        totalHours: 326,
+        baseSubtotal: 172900,
+        totalPmFee: 17290,
+        grandTotal: 190190,
+        blendedRate: 530.37,
+        briefSummary: 'Deliver an integrated communications strategy across 4 pillars, stakeholder mapping, bilingual press release distribution, and keynote launch PR support.',
+        itemsSnapshot: []
+      },
+      {
+        id: 'comm-rec-2',
+        clientName: 'Emirates Logistics Group',
+        timeline: '4 Weeks',
+        createdAt: '2026-10-22T14:15:00.000Z',
+        status: 'Presented',
+        itemsCount: 5,
+        totalHours: 186,
+        baseSubtotal: 139500,
+        totalPmFee: 13950,
+        grandTotal: 153450,
+        blendedRate: 750.00,
+        briefSummary: 'Develop a bespoke corporate crisis communications manual with escalation protocols across 5 critical scenarios, executive holding statements, and media training.',
+        itemsSnapshot: []
+      },
+      {
+        id: 'comm-rec-3',
+        clientName: 'Alpha Energy Solutions',
+        timeline: '6 Weeks',
+        createdAt: '2026-10-25T11:00:00.000Z',
+        status: 'Under Review',
+        itemsCount: 6,
+        totalHours: 195,
+        baseSubtotal: 68700,
+        totalPmFee: 6870,
+        grandTotal: 75570,
+        blendedRate: 352.31,
+        briefSummary: 'Design corporate logo with brand architecture guidelines, stationery suite, master 12-slide PowerPoint template, and digital website copywriting.',
+        itemsSnapshot: []
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('studio');
+      const [timeline, setTimeline] = useState('8 Weeks');
+      const [clientName, setClientName] = useState('Abu Dhabi Investment Council');
+      const [briefText, setBriefText] = useState(SAMPLE_BRIEFS[0].text);
+      
+      const [rateCard, setRateCard] = useState(AGENCY_RATE_CARD);
+      const [isRateDrawerOpen, setIsRateDrawerOpen] = useState(false);
+      const [drawerSearch, setDrawerSearch] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('ALL');
+      const [uploadStatus, setUploadStatus] = useState(null);
+      const fileInputRef = useRef(null);
+
+      const [seniorRoleId, setSeniorRoleId] = useState('strat-1');
+      const [midRoleId, setMidRoleId] = useState('AUTO_MEDIAN');
+      const [juniorRoleId, setJuniorRoleId] = useState('des-1');
+
+      const [scopeItems, setScopeItems] = useState([]);
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [exportNotice, setExportNotice] = useState(null);
+      const [recentlyUpdatedId, setRecentlyUpdatedId] = useState(null);
+      const [aiRationale, setAiRationale] = useState(null);
+      const [isAiConfigOpen, setIsAiConfigOpen] = useState(false);
+      const [geminiApiKey, setGeminiApiKey] = useState(() => {
+        try {
+          return localStorage.getItem('scopecraft_gemini_api_key') || '';
+        } catch (e) {
+          return '';
+        }
+      });
+
+      const [commercialRecords, setCommercialRecords] = useState(() => {
+        try {
+          const cached = localStorage.getItem('scopecraft_commercial_records');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch (e) {
+          console.warn('Could not read cached records', e);
+        }
+        return INITIAL_RECORDS;
+      });
+
+      const [recordsSearch, setRecordsSearch] = useState('');
+      const [statusFilter, setStatusFilter] = useState('ALL');
+
+      // Sync default initial scope on mount
+      useEffect(() => {
+        generateDeterministicScope(false);
+      }, []);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('scopecraft_commercial_records', JSON.stringify(commercialRecords));
+        } catch (e) {
+          console.warn('Could not cache commercial records', e);
+        }
+      }, [commercialRecords]);
+
+      const saveApiKey = (key) => {
+        const trimmed = (key || '').trim();
+        setGeminiApiKey(trimmed);
+        try {
+          localStorage.setItem('scopecraft_gemini_api_key', trimmed);
+        } catch (e) {
+          console.warn('Could not save API key', e);
+        }
+      };
+
+      // Calculate Rate Card Median
+      const rateCardMedian = useMemo(() => {
+        const validRates = rateCard
+          .map(r => Number(r.hourlyRate))
+          .filter(r => !isNaN(r) && r > 0)
+          .sort((a, b) => a - b);
+
+        if (validRates.length === 0) return 350;
+        const midIndex = Math.floor(validRates.length / 2);
+        return validRates.length % 2 !== 0
+          ? validRates[midIndex]
+          : Math.round((validRates[midIndex - 1] + validRates[midIndex]) / 2);
+      }, [rateCard]);
+
+      const seniorRole = useMemo(() => {
+        return rateCard.find(r => r.id === seniorRoleId) || rateCard.find(r => r.seniority === 'Senior') || rateCard[0];
+      }, [rateCard, seniorRoleId]);
+
+      const midRole = useMemo(() => {
+        if (midRoleId === 'AUTO_MEDIAN') {
+          return {
+            id: 'AUTO_MEDIAN',
+            item: 'Calculated Rate Card Median',
+            seniority: 'Mid',
+            hourlyRate: rateCardMedian
+          };
+        }
+        return rateCard.find(r => r.id === midRoleId) || rateCard.find(r => r.seniority === 'Mid') || {
+          id: 'default-mid',
+          item: 'Mid-Tier Practitioner',
+          seniority: 'Mid',
+          hourlyRate: rateCardMedian
+        };
+      }, [rateCard, midRoleId, rateCardMedian]);
+
+      const juniorRole = useMemo(() => {
+        return rateCard.find(r => r.id === juniorRoleId) || rateCard.find(r => r.seniority === 'Junior') || rateCard[rateCard.length - 1];
+      }, [rateCard, juniorRoleId]);
+
+      const getBenchmarkRateForTier = (tier) => {
+        if (tier === 'Senior') return Number(seniorRole.hourlyRate) || 750;
+        if (tier === 'Mid') return Number(midRole.hourlyRate) || rateCardMedian;
+        return Number(juniorRole.hourlyRate) || 300;
+      };
+
+      const metrics = useMemo(() => {
+        let totalHours = 0;
+        let baseSubtotal = 0;
+        let totalPmFee = 0;
+        let seniorHours = 0;
+        let midHours = 0;
+        let juniorHours = 0;
+        let totalUnits = 0;
+
+        scopeItems.forEach(item => {
+          const qty = Math.max(1, Number(item.quantity) || 1);
+          const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+          const h = unitH * qty;
+          const r = Number(item.hourlyRate) || 0;
+          const base = h * r;
+          const pm = Math.round(base * ((Number(item.pmFeePercentage) || 10) / 100));
+
+          totalUnits += qty;
+          totalHours += h;
+          baseSubtotal += base;
+          totalPmFee += pm;
+
+          if (item.seniority === 'Senior') seniorHours += h;
+          else if (item.seniority === 'Mid') midHours += h;
+          else juniorHours += h;
+        });
+
+        const grandTotal = baseSubtotal + totalPmFee;
+        const blendedRate = totalHours > 0 ? baseSubtotal / totalHours : 0;
+        const seniorRatio = totalHours > 0 ? (seniorHours / totalHours) * 100 : 0;
+        const midRatio = totalHours > 0 ? (midHours / totalHours) * 100 : 0;
+        const juniorRatio = totalHours > 0 ? (juniorHours / totalHours) * 100 : 0;
+
+        return {
+          totalUnits,
+          totalHours,
+          baseSubtotal,
+          totalPmFee,
+          grandTotal,
+          blendedRate,
+          seniorHours,
+          midHours,
+          juniorHours,
+          seniorRatio,
+          midRatio,
+          juniorRatio
+        };
+      }, [scopeItems]);
+
+      const portfolioStats = useMemo(() => {
+        const totalCommercialDollarValue = commercialRecords.reduce((acc, curr) => acc + (Number(curr.grandTotal) || 0), 0);
+        const totalBaseValue = commercialRecords.reduce((acc, curr) => acc + (Number(curr.baseSubtotal) || 0), 0);
+        const totalPmValue = commercialRecords.reduce((acc, curr) => acc + (Number(curr.totalPmFee) || 0), 0);
+        const totalBillableHours = commercialRecords.reduce((acc, curr) => acc + (Number(curr.totalHours) || 0), 0);
+        const overallBlendedRate = totalBillableHours > 0 ? totalBaseValue / totalBillableHours : 0;
+
+        const countApproved = commercialRecords.filter(r => r.status === 'Approved').length;
+        const countPresented = commercialRecords.filter(r => r.status === 'Presented').length;
+        const countReview = commercialRecords.filter(r => r.status === 'Under Review').length;
+        const countDraft = commercialRecords.filter(r => r.status === 'Draft').length;
+
+        return {
+          totalCommercialDollarValue,
+          totalBaseValue,
+          totalPmValue,
+          totalBillableHours,
+          overallBlendedRate,
+          countApproved,
+          countPresented,
+          countReview,
+          countDraft,
+          totalCount: commercialRecords.length
+        };
+      }, [commercialRecords]);
+
+      const saveCurrentCommercialRecord = (statusOverride = 'Presented') => {
+        if (scopeItems.length === 0) return null;
+
+        const newRecord = {
+          id: 'comm-rec-' + Date.now(),
+          clientName: clientName || 'Untitled Client',
+          timeline: timeline || 'Not Specified',
+          createdAt: new Date().toISOString(),
+          status: statusOverride,
+          itemsCount: scopeItems.length,
+          totalHours: metrics.totalHours,
+          baseSubtotal: metrics.baseSubtotal,
+          totalPmFee: metrics.totalPmFee,
+          grandTotal: metrics.grandTotal,
+          blendedRate: metrics.blendedRate,
+          briefSummary: briefText.slice(0, 160) + (briefText.length > 160 ? '...' : ''),
+          itemsSnapshot: JSON.parse(JSON.stringify(scopeItems))
+        };
+
+        setCommercialRecords(prev => [newRecord, ...prev]);
+        return newRecord;
+      };
+
+      const loadCommercialRecord = (record) => {
+        setClientName(record.clientName);
+        setTimeline(record.timeline || '8 Weeks');
+        if (record.briefSummary) setBriefText(record.briefSummary);
+        if (Array.isArray(record.itemsSnapshot) && record.itemsSnapshot.length > 0) {
+          setScopeItems(record.itemsSnapshot);
+        }
+        setActiveTab('studio');
+        setExportNotice('Loaded proposal for "' + record.clientName + '"');
+        setTimeout(() => setExportNotice(null), 3000);
+      };
+
+      const updateRecordStatus = (id, newStatus) => {
+        setCommercialRecords(prev => prev.map(rec => rec.id === id ? Object.assign({}, rec, { status: newStatus }) : rec));
+      };
+
+      const deleteRecord = (id) => {
+        setCommercialRecords(prev => prev.filter(rec => rec.id !== id));
+      };
+
+      const handleRateCardUpload = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !window.XLSX) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = window.XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const rawJson = window.XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            if (!rawJson || rawJson.length === 0) {
+              throw new Error('Spreadsheet contains no readable rows.');
+            }
+
+            const parsedItems = rawJson.map((row, idx) => {
+              const keys = Object.keys(row);
+              const findVal = (keywords) => {
+                const key = keys.find(k => keywords.some(kw => k.toLowerCase().trim().includes(kw)));
+                return key ? row[key] : null;
+              };
+
+              const itemTitle = findVal(['item', 'service', 'deliverable', 'title', 'task', 'name']) || ('Service #' + (idx + 1));
+              const category = findVal(['category', 'discipline', 'department', 'section', 'pillar']) || 'General Services';
+              const description = findVal(['desc', 'scope', 'details', 'notes']) || '';
+              const hours = Number(findVal(['hour', 'hrs', 'duration', 'time'])) || 8;
+              const rawRate = Number(findVal(['rate', 'hourly', 'aed', 'fee', 'cost'])) || 350;
+              
+              let seniority = findVal(['seniority', 'level', 'tier', 'grade']);
+              if (!seniority) {
+                if (rawRate >= 650) seniority = 'Senior';
+                else if (rawRate <= 300) seniority = 'Junior';
+                else seniority = 'Mid';
+              } else {
+                const sLower = String(seniority).toLowerCase();
+                if (sLower.includes('sen') || sLower.includes('lead') || sLower.includes('dir')) seniority = 'Senior';
+                else if (sLower.includes('jun') || sLower.includes('entry')) seniority = 'Junior';
+                else seniority = 'Mid';
+              }
+
+              const base = hours * rawRate;
+              const pm = Math.round(base * 0.10);
+
+              return {
+                id: 'custom-rc-' + Date.now() + '-' + idx,
+                category: String(category).trim(),
+                item: String(itemTitle).trim(),
+                description: String(description).trim(),
+                hours: hours,
+                hourlyRate: rawRate,
+                seniority: seniority,
+                fixedDeliverablePrice: base + pm
+              };
+            });
+
+            setRateCard(parsedItems);
+            setUploadStatus({
+              type: 'success',
+              message: 'Successfully loaded ' + parsedItems.length + ' services from "' + file.name + '"!'
+            });
+            setTimeout(() => setUploadStatus(null), 4000);
+          } catch (err) {
+            setUploadStatus({
+              type: 'error',
+              message: err.message || 'Failed to parse rate card.'
+            });
+            setTimeout(() => setUploadStatus(null), 4000);
+          } finally {
+            if (e.target) e.target.value = '';
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+
+      const downloadRateCardTemplate = () => {
+        if (!window.XLSX) return;
+        const templateData = [
+          ["Item / Service", "Category", "Description", "Seniority", "Hours per Item", "Hourly Rate (AED)"],
+          ["Brand Strategy Framework", "Strategy & Communications", "Comprehensive brand guidelines & positioning.", "Senior", 48, 750],
+          ["Media Outreach & Pitching", "PR & Media Relations", "Drafting media alert, pitching Tier-1 national press.", "Mid", 20, 450],
+          ["Social Video Cutdowns", "Design & Production", "Creation of motion-graphic cutdowns (9:16).", "Junior", 12, 300]
+        ];
+        const ws = window.XLSX.utils.aoa_to_sheet(templateData);
+        ws['!cols'] = [{ wch: 30 }, { wch: 25 }, { wch: 45 }, { wch: 14 }, { wch: 16 }, { wch: 18 }];
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, "Rate Card Template");
+        window.XLSX.writeFile(wb, "Agency_Rate_Card_Template.xlsx");
+      };
+
+      const resetToOfficialRateCard = () => {
+        setRateCard(AGENCY_RATE_CARD);
+        setSeniorRoleId('strat-1');
+        setJuniorRoleId('des-1');
+        setMidRoleId('AUTO_MEDIAN');
+        setUploadStatus({ type: 'success', message: 'Restored original official rate card.' });
+        setTimeout(() => setUploadStatus(null), 3000);
+      };
+
+      // Cascade benchmark rate adjustments to line items
+      useEffect(() => {
+        setScopeItems(prevItems => {
+          let changed = false;
+          const updated = prevItems.map(item => {
+            if (item.isCustomRate) return item;
+            const expectedRate = getBenchmarkRateForTier(item.seniority);
+            if (item.hourlyRate !== expectedRate) {
+              changed = true;
+              const qty = Math.max(1, Number(item.quantity) || 1);
+              const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+              const totalH = unitH * qty;
+              const base = totalH * expectedRate;
+              const pm = Math.round(base * 0.10);
+              return Object.assign({}, item, {
+                hourlyRate: expectedRate,
+                unitHours: unitH,
+                hours: totalH,
+                baseCost: base,
+                pmFee: pm,
+                totalPrice: base + pm
+              });
+            }
+            return item;
+          });
+          return changed ? updated : prevItems;
+        });
+      }, [seniorRole.hourlyRate, midRole.hourlyRate, juniorRole.hourlyRate]);
+
+      // Intelligent deterministic scope synthesis based on the active brief narrative
+      const generateDeterministicScope = (animate = true) => {
+        if (animate) setIsGenerating(true);
+
+        const executeSynthesis = () => {
+          try {
+            const text = (briefText || '').toLowerCase();
+            const selectedItems = [];
+            const addedIds = new Set();
+
+            const addItem = (rcItem, defaultSeniority = null, hoursMultiplier = 1, defaultQuantity = 1) => {
+              if (!rcItem || addedIds.has(rcItem.id)) return;
+              addedIds.add(rcItem.id);
+
+              const assignedTier = defaultSeniority || rcItem.seniority;
+              const tierRate = getBenchmarkRateForTier(assignedTier);
+              const unitHours = Math.max(1, Math.round(rcItem.hours * hoursMultiplier));
+              const qty = Math.max(1, defaultQuantity);
+              const totalHours = unitHours * qty;
+              const baseCost = totalHours * tierRate;
+              const pmFee = Math.round(baseCost * 0.10);
+
+              selectedItems.push({
+                id: 'line-' + Date.now() + '-' + selectedItems.length,
+                rateCardId: rcItem.id,
+                deliverable: rcItem.item,
+                category: rcItem.category,
+                seniority: assignedTier,
+                hourlyRate: tierRate,
+                isCustomRate: false,
+                quantity: qty,
+                unitHours: unitHours,
+                hours: totalHours,
+                pmFeePercentage: 10,
+                baseCost: baseCost,
+                pmFee: pmFee,
+                totalPrice: baseCost + pmFee,
+                description: rcItem.description
+              });
+            };
+
+            const extractQty = (regex, fallback = 1) => {
+              const m = text.match(regex);
+              return m && m[1] ? Math.max(1, parseInt(m[1], 10)) : fallback;
+            };
+
+            const keywordRules = [
+              { match: /integrated|comms strategy|4 pillar|campaign narrative/i, id: 'strat-1', tier: 'Senior', qty: 1 },
+              { match: /stakeholder|influencer map/i, id: 'strat-5', tier: 'Senior', qty: 1 },
+              { match: /key message|messaging framework/i, id: 'strat-6', tier: 'Senior', qty: 1 },
+              { match: /narrative|storyline/i, id: 'strat-7', tier: 'Senior', qty: 1 },
+              { match: /internal comms|internal campaign/i, id: 'strat-8', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:internal|campaign|newsletter)/i, 1) },
+              { match: /launch|campus|opening/i, id: 'plan-1', tier: 'Senior', qty: 1 },
+              { match: /research|audit|benchmark/i, id: 'res-1', tier: 'Senior', qty: 1 },
+              { match: /gcc|regional distribution/i, id: 'pr-2', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:gcc|regional|releases?)/i, 1) },
+              { match: /press release|distribution|media wire|newswire/i, id: 'pr-1', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:press release|releases?|announcements?)/i, 1) },
+              { match: /op-ed|opinion piece/i, id: 'pr-3', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:op-ed|article|opinion)/i, 1) },
+              { match: /speech|keynote/i, id: 'pr-5', tier: 'Senior', qty: extractQty(/(\d+)\s*(?:speech|keynote|address)/i, 1) },
+              { match: /interview|media briefing/i, id: 'pr-6', tier: 'Senior', qty: extractQty(/(\d+)\s*(?:interview|briefing)/i, 2) },
+              { match: /award submission|awards/i, id: 'award-1', tier: 'Senior', qty: extractQty(/(\d+)\s*award/i, 1) },
+              { match: /event|on-site|on-ground/i, id: 'event-1', tier: 'Senior', qty: 1 },
+              { match: /manual|protocol|escalation/i, id: 'crisis-1', tier: 'Senior', qty: 1 },
+              { match: /media training|spokesperson|workshop/i, id: 'train-1', tier: 'Senior', qty: 1 },
+              { match: /drill|simulation/i, id: 'crisis-2', tier: 'Senior', qty: 1 },
+              { match: /crisis/i, id: 'crisis-3', tier: 'Senior', qty: 1 },
+              { match: /website content|copywriting|web copy/i, id: 'content-1', tier: 'Senior', qty: 1 },
+              { match: /annual report/i, id: 'content-2', tier: 'Senior', qty: 1 },
+              { match: /newsletter/i, id: 'content-3', tier: 'Mid', qty: extractQty(/(\d+)\s*newsletter/i, 2) },
+              { match: /white paper|whitepaper/i, id: 'wp-1', tier: 'Senior', qty: 1 },
+              { match: /brochure copy|collateral/i, id: 'mkt-1', tier: 'Mid', qty: 1 },
+              { match: /logo|brand identity|visual identity/i, id: 'des-6', tier: 'Senior', qty: 1 },
+              { match: /brand architecture|sub-brand/i, id: 'des-24', tier: 'Senior', qty: 1 },
+              { match: /stationery|letterhead|business card/i, id: 'des-7', tier: 'Junior', qty: 1 },
+              { match: /powerpoint|presentation|ppt|slide/i, id: 'des-25', tier: 'Junior', qty: 1 },
+              { match: /screen|digital screen/i, id: 'des-1', tier: 'Junior', qty: extractQty(/(\d+)\s*screen/i, 2) },
+              { match: /campaign concept|btl/i, id: 'des-2', tier: 'Mid', qty: 1 },
+              { match: /brochure design/i, id: 'des-11', tier: 'Junior', qty: 1 },
+              { match: /infographic|animation/i, id: 'des-27', tier: 'Mid', qty: extractQty(/(\d+)\s*infographic/i, 1) },
+              { match: /video|videography|shoot|film/i, id: 'video-1', tier: 'Senior', qty: extractQty(/(\d+)\s*(?:video|shoot|day)/i, 1) },
+              { match: /editing|cut footage/i, id: 'video-3', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:video|cut|clip)/i, 1) },
+              { match: /photo|photography|photoshoot/i, id: 'photo-1', tier: 'Mid', qty: extractQty(/(\d+)\s*(?:photo|day)/i, 1) },
+              { match: /social audit|digital audit/i, id: 'soc-1', tier: 'Senior', qty: 1 },
+              { match: /social playbook|playbook/i, id: 'soc-2', tier: 'Senior', qty: 1 },
+              { match: /social post|social content/i, id: 'soc-3', tier: 'Junior', qty: extractQty(/(\d+)\s*(?:post|asset|content page)/i, 2) },
+              { match: /influencer/i, id: 'soc-5', tier: 'Senior', qty: 1 },
+              { match: /social listening|sentiment/i, id: 'soc-6', tier: 'Junior', qty: 1 }
+            ];
+
+            keywordRules.forEach(rule => {
+              if (rule.match.test(text)) {
+                const found = rateCard.find(r => r.id === rule.id);
+                if (found) addItem(found, rule.tier, 1, rule.qty || 1);
+              }
+            });
+
+            if (selectedItems.length < 5) {
+              rateCard.forEach(rc => {
+                if (addedIds.has(rc.id)) return;
+                const words = rc.item.toLowerCase().split(/[\s,/-]+/).filter(w => w.length > 3);
+                const hasMatch = words.some(w => text.includes(w));
+                if (hasMatch) {
+                  addItem(rc, null, 1, 1);
+                }
+              });
+            }
+
+            if (selectedItems.length === 0) {
+              const fallbackIds = ['strat-1', 'strat-5', 'pr-1', 'pr-5', 'event-1', 'content-1', 'des-6', 'des-25'];
+              fallbackIds.forEach(id => {
+                const found = rateCard.find(r => r.id === id);
+                if (found) addItem(found, null, 1, 1);
+              });
+            }
+
+            setScopeItems(selectedItems);
+            if (animate) {
+              setExportNotice('Generated ' + selectedItems.length + ' scoped deliverables from brief');
+              setTimeout(() => setExportNotice(null), 3000);
+            }
+          } catch (err) {
+            console.error('Scope generation error:', err);
+          } finally {
+            setIsGenerating(false);
+          }
+        };
+
+        if (animate) {
+          setTimeout(executeSynthesis, 350);
+        } else {
+          executeSynthesis();
+        }
+      };
+
+      // Gemini AI reasoning integration
+      const runScopeReasoningEngine = async () => {
+        setIsGenerating(true);
+        setAiRationale(null);
+
+        const catalogSnapshot = rateCard.map(rc => ({
+          id: rc.id,
+          item: rc.item,
+          category: rc.category,
+          baselineHours: rc.hours,
+          defaultSeniority: rc.seniority,
+          description: rc.description
+        }));
+
+        const systemInstruction = {
+          parts: [{
+            text: "You are an elite Agency Commercial Director and Chief Strategy Officer operating in the United Arab Emirates and MENA region. Your task is to perform strategic commercial reasoning on a client RFP/brief. Do NOT merely match literal words. You must infer required strategic foundations, tactical execution deliverables, executive presentation needs, and governance. For each deliverable, specify: 1) 'rateCardId' strictly from the catalog; 2) 'quantity' (the number of deliverable units/instances required, e.g. 2 press releases, 3 speeches, 1 strategy, 4 days shoot); 3) 'unitHours' (realistic hours per unit deliverable); 4) 'seniority' ('Senior', 'Mid', or 'Junior'); 5) 'commercialJustification' (1-sentence rationale). Also provide an overall 2-sentence executive summary of your scoping logic."
+          }]
+        };
+
+        const userPrompt = "Client Organization: " + (clientName || 'Confidential Client') + "\n" +
+          "Scope Timeline: " + (timeline || '8 Weeks') + "\n" +
+          "Brief Narrative & Requirements:\n\"" + (briefText || '') + "\"\n\n" +
+          "Senior Benchmark Role: " + seniorRole.item + " (" + CURRENCY_SYMBOL + seniorRole.hourlyRate + "/hr)\n" +
+          "Mid Benchmark Anchor: " + midRole.item + " (" + CURRENCY_SYMBOL + midRole.hourlyRate + "/hr)\n" +
+          "Junior Benchmark Anchor: " + juniorRole.item + " (" + CURRENCY_SYMBOL + juniorRole.hourlyRate + "/hr)\n\n" +
+          "Official Rate Card Catalog Available for Selection:\n" + JSON.stringify(catalogSnapshot.slice(0, 55));
+
+        const apiKeyToUse = geminiApiKey || "";
+        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + apiKeyToUse;
+
+        const payload = {
+          contents: [{ parts: [{ text: userPrompt }] }],
+          systemInstruction: systemInstruction,
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                strategicRationale: { type: "STRING" },
+                recommendedScope: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      rateCardId: { type: "STRING" },
+                      quantity: { type: "NUMBER" },
+                      unitHours: { type: "NUMBER" },
+                      seniority: { type: "STRING", enum: ["Senior", "Mid", "Junior"] },
+                      commercialJustification: { type: "STRING" }
+                    },
+                    required: ["rateCardId", "quantity", "unitHours", "seniority"]
+                  }
+                }
+              },
+              required: ["strategicRationale", "recommendedScope"]
+            }
+          }
+        };
+
+        try {
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            throw new Error("AI request returned HTTP " + res.status);
+          }
+
+          const resData = await res.json();
+          const candidate = resData?.candidates?.[0];
+          const rawText = candidate?.content?.parts?.[0]?.text;
+
+          if (!rawText) throw new Error("No response generated by the AI reasoning model.");
+
+          const parsed = JSON.parse(rawText);
+          const aiItems = parsed.recommendedScope || [];
+
+          if (!Array.isArray(aiItems) || aiItems.length === 0) {
+            throw new Error("AI reasoning engine returned an empty scope recommendation.");
+          }
+
+          const assembledLines = [];
+          const usedIds = new Set();
+
+          aiItems.forEach((rec, idx) => {
+            const matchedRC = rateCard.find(r => r.id === rec.rateCardId);
+            if (!matchedRC || usedIds.has(matchedRC.id)) return;
+            usedIds.add(matchedRC.id);
+
+            const tier = rec.seniority || matchedRC.seniority;
+            const rate = getBenchmarkRateForTier(tier);
+            const qty = Math.max(1, Math.round(Number(rec.quantity) || 1));
+            const unitHours = Math.max(1, Math.round(Number(rec.unitHours) || matchedRC.hours));
+            const totalHours = unitHours * qty;
+            const base = totalHours * rate;
+            const pm = Math.round(base * 0.10);
+
+            assembledLines.push({
+              id: 'line-ai-' + Date.now() + '-' + idx,
+              rateCardId: matchedRC.id,
+              deliverable: matchedRC.item,
+              category: matchedRC.category,
+              seniority: tier,
+              hourlyRate: rate,
+              isCustomRate: false,
+              quantity: qty,
+              unitHours: unitHours,
+              hours: totalHours,
+              pmFeePercentage: 10,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm,
+              description: rec.commercialJustification || matchedRC.description
+            });
+          });
+
+          if (assembledLines.length === 0) {
+            throw new Error("Could not map AI recommended items to active rate card catalog.");
+          }
+
+          setScopeItems(assembledLines);
+          if (parsed.strategicRationale) {
+            setAiRationale(parsed.strategicRationale);
+          }
+          setExportNotice("AI reasoned & synthesized " + assembledLines.length + " commercial deliverables with unit quantities");
+          setTimeout(() => setExportNotice(null), 4000);
+        } catch (err) {
+          console.warn("AI Reasoning API failed, falling back to local contextual reasoning synthesizer:", err);
+          generateDeterministicScope(false);
+          setAiRationale("Synthesized via contextual heuristic model with deliverable quantities. To enable live Gemini LLM reasoning, tap 'Set AI Key' in the top header.");
+          setExportNotice("Generated contextual scope proposal with quantities");
+          setTimeout(() => setExportNotice(null), 4000);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      // 1-hour unit step controller
+      const updateUnitHours = (id, delta) => {
+        setScopeItems(prev => prev.map(item => {
+          if (item.id === id) {
+            const currentUnitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+            const nextUnitH = Math.max(1, currentUnitH + delta);
+            const qty = Math.max(1, Number(item.quantity) || 1);
+            const nextTotalH = nextUnitH * qty;
+            const base = nextTotalH * (Number(item.hourlyRate) || 0);
+            const pm = Math.round(base * ((Number(item.pmFeePercentage) || 10) / 100));
+            return Object.assign({}, item, { 
+              unitHours: nextUnitH,
+              hours: nextTotalH,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm
+            });
+          }
+          return item;
+        }));
+      };
+
+      // Direct typed unit hours input
+      const setDirectUnitHours = (id, value) => {
+        const nextUnitH = Math.max(1, parseInt(value, 10) || 1);
+        setScopeItems(prev => prev.map(item => {
+          if (item.id === id) {
+            const qty = Math.max(1, Number(item.quantity) || 1);
+            const nextTotalH = nextUnitH * qty;
+            const base = nextTotalH * (Number(item.hourlyRate) || 0);
+            const pm = Math.round(base * ((Number(item.pmFeePercentage) || 10) / 100));
+            return Object.assign({}, item, {
+              unitHours: nextUnitH,
+              hours: nextTotalH,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm
+            });
+          }
+          return item;
+        }));
+      };
+
+      const updateQuantity = (id, delta) => {
+        setScopeItems(prev => prev.map(item => {
+          if (item.id === id) {
+            const currentQty = Math.max(1, Number(item.quantity) || 1);
+            const nextQty = Math.max(1, currentQty + delta);
+            const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+            const nextTotalH = unitH * nextQty;
+            const base = nextTotalH * (Number(item.hourlyRate) || 0);
+            const pm = Math.round(base * ((Number(item.pmFeePercentage) || 10) / 100));
+            return Object.assign({}, item, {
+              quantity: nextQty,
+              unitHours: unitH,
+              hours: nextTotalH,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm
+            });
+          }
+          return item;
+        }));
+      };
+
+      const setDirectQuantity = (id, value) => {
+        const nextQty = Math.max(1, parseInt(value, 10) || 1);
+        setScopeItems(prev => prev.map(item => {
+          if (item.id === id) {
+            const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+            const nextTotalH = unitH * nextQty;
+            const base = nextTotalH * (Number(item.hourlyRate) || 0);
+            const pm = Math.round(base * ((Number(item.pmFeePercentage) || 10) / 100));
+            return Object.assign({}, item, {
+              quantity: nextQty,
+              unitHours: unitH,
+              hours: nextTotalH,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm
+            });
+          }
+          return item;
+        }));
+      };
+
+      const updateItemDeliverable = (id, newRateCardId) => {
+        const rc = rateCard.find(r => r.id === newRateCardId);
+        if (!rc) return;
+        setScopeItems(prev => prev.map(item => {
+          if (item.id === id) {
+            const targetTier = item.seniority || rc.seniority;
+            const targetRate = getBenchmarkRateForTier(targetTier);
+            const qty = Math.max(1, Number(item.quantity) || 1);
+            const unitH = rc.hours;
+            const totalH = unitH * qty;
+            const base = totalH * targetRate;
+            const pm = Math.round(base * 0.10);
+            return Object.assign({}, item, {
+              rateCardId: rc.id,
+              deliverable: rc.item,
+              category: rc.category,
+              seniority: targetTier,
+              hourlyRate: targetRate,
+              isCustomRate: false,
+              unitHours: unitH,
+              hours: totalH,
+              baseCost: base,
+              pmFee: pm,
+              totalPrice: base + pm,
+              description: rc.description
+            });
+          }
+          return item;
+        }));
+      };
+
+      const updateSeniority = (id, newSeniority) => {
+        const targetRate = getBenchmarkRateForTier(newSeniority);
+
+        setScopeItems(prev => prev.map(item => {
+          if (item.id !== id) return item;
+          const qty = Math.max(1, Number(item.quantity) || 1);
+          const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+          const totalH = unitH * qty;
+          const base = totalH * targetRate;
+          const pm = Math.round(base * 0.10);
+          return Object.assign({}, item, { 
+            seniority: newSeniority,
+            hourlyRate: targetRate,
+            isCustomRate: false,
+            unitHours: unitH,
+            hours: totalH,
+            baseCost: base,
+            pmFee: pm,
+            totalPrice: base + pm
+          });
+        }));
+
+        setRecentlyUpdatedId(id);
+        setTimeout(() => setRecentlyUpdatedId(null), 1200);
+      };
+
+      const updateCustomRate = (id, newRate) => {
+        const parsedRate = Math.max(0, Number(newRate) || 0);
+        setScopeItems(prev => prev.map(item => {
+          if (item.id !== id) return item;
+          const qty = Math.max(1, Number(item.quantity) || 1);
+          const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+          const totalH = unitH * qty;
+          const base = totalH * parsedRate;
+          const pm = Math.round(base * 0.10);
+          return Object.assign({}, item, {
+            hourlyRate: parsedRate,
+            isCustomRate: true,
+            unitHours: unitH,
+            hours: totalH,
+            baseCost: base,
+            pmFee: pm,
+            totalPrice: base + pm
+          });
+        }));
+      };
+
+      const syncToTierBenchmark = (id) => {
+        setScopeItems(prev => prev.map(item => {
+          if (item.id !== id) return item;
+          const benchmarkRate = getBenchmarkRateForTier(item.seniority);
+          const qty = Math.max(1, Number(item.quantity) || 1);
+          const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+          const totalH = unitH * qty;
+          const base = totalH * benchmarkRate;
+          const pm = Math.round(base * 0.10);
+          return Object.assign({}, item, {
+            hourlyRate: benchmarkRate,
+            isCustomRate: false,
+            unitHours: unitH,
+            hours: totalH,
+            baseCost: base,
+            pmFee: pm,
+            totalPrice: base + pm
+          });
+        }));
+        setRecentlyUpdatedId(id);
+        setTimeout(() => setRecentlyUpdatedId(null), 1200);
+      };
+
+      const removeLineItem = (id) => {
+        setScopeItems(prev => prev.filter(item => item.id !== id));
+      };
+
+      const addLineItemFromRateCard = (rcItem) => {
+        const tierRate = getBenchmarkRateForTier(rcItem.seniority);
+        const qty = 1;
+        const unitH = rcItem.hours;
+        const totalH = unitH * qty;
+        const base = totalH * tierRate;
+        const pm = Math.round(base * 0.10);
+        setScopeItems(prev => prev.concat([{
+          id: 'line-added-' + Date.now(),
+          rateCardId: rcItem.id,
+          deliverable: rcItem.item,
+          category: rcItem.category,
+          seniority: rcItem.seniority,
+          hourlyRate: tierRate,
+          isCustomRate: false,
+          quantity: qty,
+          unitHours: unitH,
+          hours: totalH,
+          pmFeePercentage: 10,
+          baseCost: base,
+          pmFee: pm,
+          totalPrice: base + pm,
+          description: rcItem.description
+        }]));
+      };
+
+      // Formatted Multi-Sheet Excel Export with ALL line items guaranteed
+      const exportToExcel = (overrideItems = null, overrideClient = null, overrideTimeline = null) => {
+        const xlsxLib = window.XLSX;
+        if (!xlsxLib) return;
+
+        const itemsToExport = overrideItems || scopeItems;
+        const clientToExport = overrideClient || clientName;
+        const timelineToExport = overrideTimeline || timeline;
+
+        if (itemsToExport.length === 0) {
+          setExportNotice('No line items to export. Generate or add deliverables first.');
+          setTimeout(() => setExportNotice(null), 3000);
+          return;
+        }
+
+        if (!overrideItems) {
+          saveCurrentCommercialRecord('Presented');
+        }
+
+        const borderThin = { style: 'thin', color: { rgb: 'D9D9D9' } };
+        const borderDark = { style: 'thin', color: { rgb: '1F3864' } };
+        const borderDoubleBottom = { style: 'double', color: { rgb: '1F3864' } };
+
+        const styles = {
+          agencyHeader: { font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '1F3864' } } },
+          metaLabel: { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '595959' } } },
+          metaValue: { font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } } },
+          tableHeaderStandard: {
+            font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+            fill: { fgColor: { rgb: '2F5597' } },
+            alignment: { vertical: 'center', horizontal: 'center', wrapText: true },
+            border: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark }
+          },
+          tableHeaderGold: {
+            font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '4D2600' } },
+            fill: { fgColor: { rgb: 'FFE699' } },
+            alignment: { vertical: 'center', horizontal: 'center', wrapText: true },
+            border: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark }
+          },
+          tableHeaderBlue: {
+            font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+            fill: { fgColor: { rgb: '1F4E79' } },
+            alignment: { vertical: 'center', horizontal: 'center', wrapText: true },
+            border: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark }
+          },
+          categoryDivider: {
+            font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1F3864' } },
+            fill: { fgColor: { rgb: 'D9E1F2' } },
+            alignment: { vertical: 'center', horizontal: 'left' }
+          },
+          itemCell: { font: { name: 'Calibri', sz: 10, bold: true }, border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          descCell: { font: { name: 'Calibri', sz: 9 }, border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          qtyCell: { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1F3864' } }, alignment: { horizontal: 'center' }, numFmt: '#,##0', border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          numberCell: { font: { name: 'Calibri', sz: 10 }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          currencyCell: { font: { name: 'Calibri', sz: 10 }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          pmCell: { font: { name: 'Calibri', sz: 10, color: { rgb: '7F6000' } }, fill: { fgColor: { rgb: 'FFFBE6' } }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          totalCell: { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1F3864' } }, fill: { fgColor: { rgb: 'EDF2F8' } }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderThin, bottom: borderThin, left: borderThin, right: borderThin } },
+          summaryTotalLabel: { font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '1F3864' } }, border: { top: borderDark, bottom: borderDoubleBottom } },
+          summaryTotalNumber: { font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '1F3864' } }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderDark, bottom: borderDoubleBottom } },
+          summaryTotalFinal: { font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1F4E79' } }, alignment: { horizontal: 'right' }, numFmt: '#,##0', border: { top: borderDark, bottom: borderDoubleBottom } }
+        };
+
+        const ws = {};
+        const merges = [];
+        let r = 0;
+
+        const setCell = (row, col, value, type, style, formula = null) => {
+          const cellRef = xlsxLib.utils.encode_cell({ r: row, c: col });
+          const cellObj = { v: value, t: type };
+          if (style) cellObj.s = style;
+          if (formula) cellObj.f = formula;
+          ws[cellRef] = cellObj;
+        };
+
+        setCell(r, 0, 'COMMERCIAL PROPOSAL & SCOPE OF WORK', 's', styles.agencyHeader);
+        merges.push({ s: { r, c: 0 }, e: { r, c: 7 } });
+        r += 2;
+
+        setCell(r, 0, 'Client Organization:', 's', styles.metaLabel);
+        setCell(r, 1, clientToExport, 's', styles.metaValue);
+        setCell(r, 5, 'Date:', 's', styles.metaLabel);
+        setCell(r, 6, new Date().toLocaleDateString('en-GB'), 's', styles.metaValue);
+        r++;
+
+        setCell(r, 0, 'Scope Duration:', 's', styles.metaLabel);
+        setCell(r, 1, timelineToExport, 's', styles.metaValue);
+        setCell(r, 5, 'Currency:', 's', styles.metaLabel);
+        setCell(r, 6, 'AED', 's', styles.metaValue);
+        r += 2;
+
+        const headers = [
+          { text: 'Item', style: styles.tableHeaderStandard },
+          { text: 'Description', style: styles.tableHeaderStandard },
+          { text: 'Qty /\nUnits', style: styles.tableHeaderStandard },
+          { text: 'Hours per\nitem', style: styles.tableHeaderStandard },
+          { text: 'Rate\n(AED)', style: styles.tableHeaderStandard },
+          { text: 'Subtotal\n(AED)', style: styles.tableHeaderStandard },
+          { text: '10% project\nmanagement', style: styles.tableHeaderGold },
+          { text: 'Price in AED', style: styles.tableHeaderBlue }
+        ];
+
+        headers.forEach((hItem, colIdx) => setCell(r, colIdx, hItem.text, 's', hItem.style));
+        r++;
+
+        // Group deliverables while preserving all original items
+        const categoryMap = new Map();
+        itemsToExport.forEach(item => {
+          const cat = (item.category && item.category.trim()) ? item.category.trim() : 'General Deliverables';
+          if (!categoryMap.has(cat)) categoryMap.set(cat, []);
+          categoryMap.get(cat).push(item);
+        });
+
+        const dataRowIndices = [];
+
+        categoryMap.forEach((items, category) => {
+          setCell(r, 0, category.toUpperCase(), 's', styles.categoryDivider);
+          for (let c = 1; c <= 7; c++) setCell(r, c, '', 's', styles.categoryDivider);
+          merges.push({ s: { r, c: 0 }, e: { r, c: 7 } });
+          r++;
+
+          items.forEach(item => {
+            const itemRow = r;
+            dataRowIndices.push(itemRow + 1);
+
+            const qty = Math.max(1, Number(item.quantity) || 1);
+            const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+            const totalHours = unitH * qty;
+            const rate = Number(item.hourlyRate) || 0;
+            const base = totalHours * rate;
+            const pm = Math.round(base * 0.10);
+            const total = base + pm;
+            const rowIdx = itemRow + 1;
+
+            setCell(itemRow, 0, item.deliverable, 's', styles.itemCell);
+            setCell(itemRow, 1, item.description || '', 's', styles.descCell);
+            setCell(itemRow, 2, qty, 'n', styles.qtyCell);
+            setCell(itemRow, 3, unitH, 'n', styles.numberCell);
+            setCell(itemRow, 4, rate, 'n', styles.currencyCell);
+            setCell(itemRow, 5, base, 'n', styles.currencyCell, 'C' + rowIdx + '*D' + rowIdx + '*E' + rowIdx);
+            setCell(itemRow, 6, pm, 'n', styles.pmCell, 'F' + rowIdx + '*0.1');
+            setCell(itemRow, 7, total, 'n', styles.totalCell, 'F' + rowIdx + '+G' + rowIdx);
+            r++;
+          });
+        });
+
+        r++;
+        const totalRow = r;
+        setCell(totalRow, 0, 'TOTAL COMMERCIAL INVESTMENT', 's', styles.summaryTotalLabel);
+        merges.push({ s: { r: totalRow, c: 0 }, e: { r: totalRow, c: 1 } });
+
+        let expUnits = 0, expHours = 0, expBase = 0, expPm = 0;
+        itemsToExport.forEach(it => {
+          const q = Math.max(1, Number(it.quantity) || 1);
+          const uh = Number(it.unitHours !== undefined ? it.unitHours : it.hours) || 0;
+          const th = uh * q;
+          const rate = Number(it.hourlyRate) || 0;
+          const b = th * rate;
+          expUnits += q;
+          expHours += th;
+          expBase += b;
+          expPm += Math.round(b * 0.10);
+        });
+
+        if (dataRowIndices.length > 0) {
+          const firstRow = dataRowIndices[0];
+          const lastRow = dataRowIndices[dataRowIndices.length - 1];
+          setCell(totalRow, 2, expUnits, 'n', styles.summaryTotalNumber, 'SUM(C' + firstRow + ':C' + lastRow + ')');
+          setCell(totalRow, 3, expHours, 'n', styles.summaryTotalNumber);
+          setCell(totalRow, 4, Math.round(expHours > 0 ? expBase / expHours : 0), 'n', styles.summaryTotalNumber);
+          setCell(totalRow, 5, expBase, 'n', styles.summaryTotalNumber, 'SUM(F' + firstRow + ':F' + lastRow + ')');
+          setCell(totalRow, 6, expPm, 'n', styles.summaryTotalNumber, 'SUM(G' + firstRow + ':G' + lastRow + ')');
+          setCell(totalRow, 7, expBase + expPm, 'n', styles.summaryTotalFinal, 'SUM(H' + firstRow + ':H' + lastRow + ')');
+        }
+
+        // Calculate dynamic dimensions to guarantee that every single cell is rendered
+        let maxR = 0;
+        let maxC = 0;
+        Object.keys(ws).forEach(k => {
+          if (k[0] === '!') return;
+          const coord = xlsxLib.utils.decode_cell(k);
+          if (coord.r > maxR) maxR = coord.r;
+          if (coord.c > maxC) maxC = coord.c;
+        });
+
+        ws['!ref'] = xlsxLib.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxR, c: maxC } });
+        ws['!merges'] = merges;
+        ws['!cols'] = [{ wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 18 }];
+
+        // Tab 2: Rate Card
+        const wsRateCard = {};
+        let r2 = 0;
+        const setCellRc = (row, col, value, type, style, formula = null) => {
+          const cellRef = xlsxLib.utils.encode_cell({ r: row, c: col });
+          const cellObj = { v: value, t: type };
+          if (style) cellObj.s = style;
+          if (formula) cellObj.f = formula;
+          wsRateCard[cellRef] = cellObj;
+        };
+
+        setCellRc(r2, 0, 'MASTER AGENCY RATE CARD', 's', styles.agencyHeader);
+        r2 += 2;
+        const rcHeaders = [
+          { text: 'Item', style: styles.tableHeaderStandard },
+          { text: 'Description', style: styles.tableHeaderStandard },
+          { text: 'Hours per\nitem', style: styles.tableHeaderStandard },
+          { text: 'Rate\n(AED)', style: styles.tableHeaderStandard },
+          { text: 'Subtotal\n(AED)', style: styles.tableHeaderStandard },
+          { text: '10% project\nmanagement', style: styles.tableHeaderGold },
+          { text: 'Price in AED', style: styles.tableHeaderBlue }
+        ];
+        rcHeaders.forEach((hItem, colIdx) => setCellRc(r2, colIdx, hItem.text, 's', hItem.style));
+        r2++;
+
+        rateCard.forEach(rc => {
+          const base = rc.hours * rc.hourlyRate;
+          const pm = Math.round(base * 0.10);
+          const total = base + pm;
+          const rowIdx = r2 + 1;
+
+          setCellRc(r2, 0, rc.item, 's', styles.itemCell);
+          setCellRc(r2, 1, rc.description || '', 's', styles.descCell);
+          setCellRc(r2, 2, rc.hours, 'n', styles.numberCell);
+          setCellRc(r2, 3, rc.hourlyRate, 'n', styles.currencyCell);
+          setCellRc(r2, 4, base, 'n', styles.currencyCell, 'C' + rowIdx + '*D' + rowIdx);
+          setCellRc(r2, 5, pm, 'n', styles.pmCell, 'E' + rowIdx + '*0.1');
+          setCellRc(r2, 6, total, 'n', styles.totalCell, 'E' + rowIdx + '+F' + rowIdx);
+          r2++;
+        });
+
+        let maxR2 = 0;
+        let maxC2 = 0;
+        Object.keys(wsRateCard).forEach(k => {
+          if (k[0] === '!') return;
+          const coord = xlsxLib.utils.decode_cell(k);
+          if (coord.r > maxR2) maxR2 = coord.r;
+          if (coord.c > maxC2) maxC2 = coord.c;
+        });
+
+        wsRateCard['!ref'] = xlsxLib.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxR2, c: maxC2 } });
+        wsRateCard['!cols'] = [{ wch: 34 }, { wch: 54 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 18 }];
+
+        const wb = xlsxLib.utils.book_new();
+        xlsxLib.utils.book_append_sheet(wb, ws, "Commercial Proposal");
+        xlsxLib.utils.book_append_sheet(wb, wsRateCard, "Agency Rate Card");
+
+        const sanitizedName = clientToExport ? clientToExport.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '_') : 'Client';
+        xlsxLib.writeFile(wb, 'Commercial_Proposal_' + sanitizedName + '.xlsx');
+
+        setExportNotice('Exported all ' + itemsToExport.length + ' items for ' + clientToExport);
+        setTimeout(() => setExportNotice(null), 3500);
+      };
+
+      const exportPortfolioRollup = () => {
+        if (!window.XLSX) return;
+        const summaryRows = [
+          ["COMMERCIAL PIPELINE & SUBMISSIONS SUMMARY"],
+          ["Generated on: " + new Date().toLocaleDateString('en-GB')],
+          ["Total Value: AED " + portfolioStats.totalCommercialDollarValue.toLocaleString()],
+          ["Total Hours: " + portfolioStats.totalBillableHours + " hrs"],
+          [],
+          ["Client", "Timeline", "Status", "Hours", "Base Subtotal (AED)", "10% PM Fee (AED)", "Total Price (AED)", "Blended Rate", "Date"]
+        ];
+
+        commercialRecords.forEach(rec => {
+          summaryRows.push([
+            rec.clientName,
+            rec.timeline,
+            rec.status,
+            rec.totalHours,
+            rec.baseSubtotal,
+            rec.totalPmFee,
+            rec.grandTotal,
+            Math.round(rec.blendedRate),
+            new Date(rec.createdAt).toLocaleDateString('en-GB')
+          ]);
+        });
+
+        const ws = window.XLSX.utils.aoa_to_sheet(summaryRows);
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, "Pipeline Summary");
+        window.XLSX.writeFile(wb, "Agency_Commercial_Pipeline_Rollup.xlsx");
+      };
+
+      const filteredRecords = useMemo(() => {
+        return commercialRecords.filter(rec => {
+          const matchSearch = rec.clientName.toLowerCase().includes(recordsSearch.toLowerCase()) ||
+                              (rec.briefSummary && rec.briefSummary.toLowerCase().includes(recordsSearch.toLowerCase()));
+          const matchStatus = statusFilter === 'ALL' || rec.status === statusFilter;
+          return matchSearch && matchStatus;
+        });
+      }, [commercialRecords, recordsSearch, statusFilter]);
+
+      const filteredRateCard = useMemo(() => {
+        return rateCard.filter(rc => {
+          const matchesSearch = rc.item.toLowerCase().includes(drawerSearch.toLowerCase()) ||
+                                rc.category.toLowerCase().includes(drawerSearch.toLowerCase()) ||
+                                rc.description.toLowerCase().includes(drawerSearch.toLowerCase());
+          const matchesCat = selectedCategory === 'ALL' || rc.category === selectedCategory;
+          return matchesSearch && matchesCat;
+        });
+      }, [rateCard, drawerSearch, selectedCategory]);
+
+      const categories = useMemo(() => ['ALL'].concat(Array.from(new Set(rateCard.map(r => r.category)))), [rateCard]);
+
+      return h('div', { className: 'flex flex-col min-h-screen' },
+        // Header
+        h('header', { className: 'border-b border-zinc-900 bg-zinc-950/85 backdrop-blur sticky top-0 z-30' },
+          h('div', { className: 'max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between' },
+            h('div', { className: 'flex items-center gap-3' },
+              h('div', { className: 'h-7 w-7 rounded-md bg-gradient-to-tr from-amber-500 to-amber-300 text-zinc-950 flex items-center justify-center font-black text-sm tracking-tight shadow' }, 'S'),
+              h('span', { className: 'font-semibold text-sm tracking-tight text-white' }, 'ScopeCraft'),
+              h('span', { className: 'hidden sm:inline-block text-[11px] text-amber-400 font-mono bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/40' }, 'Official Rate Card (AED)'),
+              h('div', { className: 'ml-3 flex items-center bg-zinc-900 border border-zinc-850 rounded-lg p-0.5 text-xs' },
+                h('button', {
+                  onClick: () => setActiveTab('studio'),
+                  className: 'px-3 py-1 rounded transition font-medium flex items-center gap-1.5 ' + (activeTab === 'studio' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white')
+                }, h(Icon, { name: 'layers', className: 'w-3.5 h-3.5 text-amber-400' }), 'Studio'),
+                h('button', {
+                  onClick: () => setActiveTab('records'),
+                  className: 'px-3 py-1 rounded transition font-medium flex items-center gap-1.5 ' + (activeTab === 'records' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white')
+                }, h(Icon, { name: 'archive', className: 'w-3.5 h-3.5 text-blue-400' }), 'Records',
+                   h('span', { className: 'bg-zinc-700/80 text-[10px] font-mono px-1.5 py-0.2 rounded-full' }, commercialRecords.length)
+                )
+              )
+            ),
+            h('input', {
+              type: 'file',
+              ref: fileInputRef,
+              onChange: handleRateCardUpload,
+              accept: '.xlsx,.xls,.csv',
+              className: 'hidden'
+            }),
+            h('div', { className: 'flex items-center gap-2' },
+              activeTab === 'studio' ? [
+                h('button', {
+                  key: 'ai-key-btn',
+                  onClick: () => setIsAiConfigOpen(true),
+                  className: 'text-xs text-zinc-300 hover:text-white px-2.5 py-1.5 rounded bg-zinc-900 border border-zinc-800 flex items-center gap-1.5'
+                },
+                  h(Icon, { name: 'sparkles', className: 'w-3.5 h-3.5 ' + (geminiApiKey ? 'text-amber-400' : 'text-zinc-500') }),
+                  h('span', { className: 'hidden md:inline font-mono' }, geminiApiKey ? 'AI Connected' : 'Set AI Key')
+                ),
+                h('button', {
+                  key: 'save-btn',
+                  onClick: () => {
+                    const saved = saveCurrentCommercialRecord('Draft');
+                    if (saved) {
+                      setExportNotice('Saved proposal for "' + clientName + '"');
+                      setTimeout(() => setExportNotice(null), 3000);
+                    }
+                  },
+                  className: 'hidden sm:flex text-xs text-zinc-300 hover:text-white px-2.5 py-1.5 rounded bg-zinc-900 border border-zinc-800 items-center gap-1.5'
+                }, h(Icon, { name: 'save', className: 'w-3.5 h-3.5 text-zinc-400' }), 'Save'),
+                h('button', {
+                  key: 'upload-rc-btn',
+                  onClick: () => fileInputRef.current && fileInputRef.current.click(),
+                  className: 'text-xs text-zinc-300 hover:text-white px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 flex items-center gap-1.5'
+                }, h(Icon, { name: 'upload', className: 'w-3.5 h-3.5 text-amber-400' }), h('span', { className: 'hidden md:inline' }, 'Upload Rate Card')),
+                h('button', {
+                  key: 'drawer-btn',
+                  onClick: () => setIsRateDrawerOpen(true),
+                  className: 'text-xs text-zinc-300 hover:text-white px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 flex items-center gap-1.5'
+                }, h(Icon, { name: 'sliders', className: 'w-3.5 h-3.5 text-zinc-400' }), h('span', { className: 'hidden md:inline' }, 'Catalog'), h('span', { className: 'text-[10px] text-zinc-500 font-mono' }, '(' + rateCard.length + ')')),
+                h('button', {
+                  key: 'excel-btn',
+                  onClick: () => exportToExcel(),
+                  className: 'text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-3.5 py-1.5 rounded flex items-center gap-1.5 shadow'
+                }, h(Icon, { name: 'spreadsheet', className: 'w-3.5 h-3.5' }), 'Export Excel')
+              ] : [
+                h('button', {
+                  key: 'rollup-btn',
+                  onClick: exportPortfolioRollup,
+                  className: 'text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-3.5 py-1.5 rounded flex items-center gap-1.5 shadow'
+                }, h(Icon, { name: 'spreadsheet', className: 'w-3.5 h-3.5' }), 'Download Pipeline (.XLSX)')
+              ]
+            )
+          )
+        ),
+
+        // Notifications
+        uploadStatus ? h('div', {
+          className: 'fixed top-16 left-1/2 -translate-x-1/2 z-50 text-xs px-4 py-2 rounded-lg border shadow-xl flex items-center gap-2 ' +
+            (uploadStatus.type === 'error' ? 'bg-rose-950 border-rose-700 text-rose-200' : 'bg-emerald-950 border-emerald-700 text-emerald-200')
+        }, h(Icon, { name: uploadStatus.type === 'error' ? 'alert' : 'check', className: 'w-4 h-4 shrink-0' }), uploadStatus.message) : null,
+
+        exportNotice ? h('div', {
+          className: 'fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-950 border border-emerald-700 text-emerald-200 text-xs px-4 py-2 rounded-lg shadow-xl flex items-center gap-2'
+        }, h(Icon, { name: 'check', className: 'w-4 h-4 text-emerald-400' }), exportNotice) : null,
+
+        // TAB 1: STUDIO
+        activeTab === 'studio' ? h('main', { className: 'max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start' },
+          // Left configuration
+          h('section', { className: 'lg:col-span-5 bg-zinc-900/60 border border-zinc-850 rounded-xl p-5 space-y-4' },
+            h('div', { className: 'flex items-center justify-between pb-3 border-b border-zinc-850' },
+              h('div', null,
+                h('h2', { className: 'text-sm font-semibold text-white' }, 'Proposal Parameters & Rates'),
+                h('p', { className: 'text-xs text-zinc-400 mt-0.5' }, 'Input the brief and lock Senior, Mid, and Junior benchmarks')
+              ),
+              h('div', { className: 'text-right' },
+                h('span', { className: 'text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold' }, 'Standard PM'),
+                h('span', { className: 'text-xs font-mono font-bold text-amber-400' }, '+10% Added')
+              )
+            ),
+
+            h('div', null,
+              h('span', { className: 'text-[11px] font-medium text-zinc-400 uppercase tracking-wider block mb-1.5' }, 'Brief Presets'),
+              h('div', { className: 'flex gap-1.5 flex-wrap' },
+                SAMPLE_BRIEFS.map((sb, i) => h('button', {
+                  key: i,
+                  onClick: () => {
+                    setBriefText(sb.text);
+                    setClientName(sb.client);
+                    setTimeline(sb.timeline);
+                  },
+                  className: 'text-xs bg-zinc-950 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 px-2.5 py-1 rounded transition'
+                }, sb.label))
+              )
+            ),
+
+            h('div', { className: 'grid grid-cols-2 gap-3' },
+              h('div', null,
+                h('label', { className: 'text-[11px] font-medium text-zinc-400 block mb-1' }, 'Client Entity'),
+                h('input', {
+                  type: 'text',
+                  value: clientName,
+                  onChange: (e) => setClientName(e.target.value),
+                  className: 'w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none'
+                })
+              ),
+              h('div', null,
+                h('label', { className: 'text-[11px] font-medium text-zinc-400 block mb-1' }, 'Scope Duration'),
+                h('input', {
+                  type: 'text',
+                  value: timeline,
+                  onChange: (e) => setTimeline(e.target.value),
+                  className: 'w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none'
+                })
+              )
+            ),
+
+            h('div', null,
+              h('label', { className: 'text-[11px] font-medium text-zinc-400 block mb-1' }, 'Brief Requirements'),
+              h('textarea', {
+                rows: 4,
+                value: briefText,
+                onChange: (e) => setBriefText(e.target.value),
+                className: 'w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 focus:outline-none resize-none leading-relaxed'
+              })
+            ),
+
+            h('div', { className: 'space-y-3 pt-1' },
+              h('span', { className: 'text-[11px] font-medium text-zinc-400 uppercase tracking-wider block' }, 'Benchmark Rate Anchors'),
+
+              // Senior
+              h('div', null,
+                h('div', { className: 'flex justify-between items-center mb-1' },
+                  h('span', { className: 'text-xs text-zinc-300 flex items-center gap-1.5 font-medium' },
+                    h('span', { className: 'h-2 w-2 rounded-full bg-purple-400' }), 'Senior Anchor'
+                  ),
+                  h('span', { className: 'text-xs font-mono text-purple-300 font-bold' }, CURRENCY_SYMBOL + seniorRole.hourlyRate + '/hr')
+                ),
+                h('select', {
+                  value: seniorRoleId,
+                  onChange: (e) => setSeniorRoleId(e.target.value),
+                  className: 'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200'
+                }, rateCard.filter(r => r.seniority === 'Senior').map(item => h('option', { key: item.id, value: item.id }, item.item + ' — ' + CURRENCY_SYMBOL + item.hourlyRate + '/hr')))
+              ),
+
+              // Mid / Median
+              h('div', { className: 'bg-zinc-950/80 p-3 rounded-lg border border-zinc-850' },
+                h('div', { className: 'flex justify-between items-center mb-1.5' },
+                  h('span', { className: 'text-xs text-zinc-200 flex items-center gap-1.5 font-medium' },
+                    h('span', { className: 'h-2 w-2 rounded-full bg-blue-400' }), 'Mid / Median Anchor'
+                  ),
+                  h('div', { className: 'flex items-center gap-1.5' },
+                    h('button', {
+                      onClick: () => setMidRoleId('AUTO_MEDIAN'),
+                      className: 'text-[10px] px-2 py-0.5 rounded border transition flex items-center gap-1 ' +
+                        (midRoleId === 'AUTO_MEDIAN' ? 'bg-blue-950 text-blue-300 border-blue-700' : 'bg-zinc-900 text-zinc-400 border-zinc-800')
+                    }, h(Icon, { name: 'calculator', className: 'w-2.5 h-2.5' }), 'Rate Card Median'),
+                    h('span', { className: 'text-xs font-mono text-blue-300 font-bold' }, CURRENCY_SYMBOL + midRole.hourlyRate + '/hr')
+                  )
+                ),
+                h('select', {
+                  value: midRoleId,
+                  onChange: (e) => setMidRoleId(e.target.value),
+                  className: 'w-full bg-zinc-900 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-200'
+                },
+                  h('option', { value: 'AUTO_MEDIAN' }, '★ Calculated Rate Card Median (' + CURRENCY_SYMBOL + rateCardMedian + '/hr)'),
+                  h('optgroup', { label: 'Mid-Tier Services' },
+                    rateCard.filter(r => r.seniority === 'Mid').map(item => h('option', { key: item.id, value: item.id }, item.item + ' — ' + CURRENCY_SYMBOL + item.hourlyRate + '/hr'))
+                  )
+                )
+              ),
+
+              // Junior
+              h('div', null,
+                h('div', { className: 'flex justify-between items-center mb-1' },
+                  h('span', { className: 'text-xs text-zinc-300 flex items-center gap-1.5 font-medium' },
+                    h('span', { className: 'h-2 w-2 rounded-full bg-emerald-400' }), 'Junior Anchor'
+                  ),
+                  h('span', { className: 'text-xs font-mono text-emerald-300 font-bold' }, CURRENCY_SYMBOL + juniorRole.hourlyRate + '/hr')
+                ),
+                h('select', {
+                  value: juniorRoleId,
+                  onChange: (e) => setJuniorRoleId(e.target.value),
+                  className: 'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200'
+                }, rateCard.filter(r => r.seniority === 'Junior').map(item => h('option', { key: item.id, value: item.id }, item.item + ' — ' + CURRENCY_SYMBOL + item.hourlyRate + '/hr')))
+              )
+            ),
+
+            h('div', { className: 'pt-2 flex flex-col gap-2' },
+              h('button', {
+                onClick: runScopeReasoningEngine,
+                disabled: isGenerating,
+                className: 'w-full py-3 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 rounded-lg text-xs font-black tracking-wide uppercase flex items-center justify-center gap-2 shadow-lg shadow-amber-950/30 transition active:scale-[0.99] disabled:opacity-50'
+              },
+                h(Icon, { name: 'sparkles', className: 'w-4 h-4 ' + (isGenerating ? 'animate-spin' : '') }),
+                isGenerating ? "Reasoning & Scoping Deliverables..." : "Reason & Run Commercial Scope"
+              ),
+
+              h('div', { className: 'flex items-center justify-between pt-1' },
+                h('button', {
+                  onClick: () => {
+                    const saved = saveCurrentCommercialRecord('Draft');
+                    if (saved) {
+                      setExportNotice('Saved proposal for "' + clientName + '"');
+                      setTimeout(() => setExportNotice(null), 3000);
+                    }
+                  },
+                  className: 'text-xs text-zinc-400 hover:text-white flex items-center gap-1 py-1'
+                }, h(Icon, { name: 'save', className: 'w-3 h-3' }), 'Save to Records'),
+                h('button', {
+                  onClick: () => setIsAiConfigOpen(true),
+                  className: 'text-xs text-zinc-400 hover:text-amber-300 flex items-center gap-1 py-1 font-mono'
+                }, h(Icon, { name: 'sliders', className: 'w-3 h-3' }), 'Configure AI Model')
+              )
+            )
+          ),
+
+          // Right scope table
+          h('section', { className: 'lg:col-span-7 space-y-4' },
+            aiRationale ? h('div', {
+              className: 'bg-gradient-to-r from-amber-950/30 via-zinc-900/60 to-zinc-900 border border-amber-800/40 rounded-xl p-3.5 text-xs text-zinc-300 space-y-1 relative'
+            },
+              h('div', { className: 'flex items-center justify-between text-amber-300 font-semibold text-[11px] uppercase tracking-wider' },
+                h('span', { className: 'flex items-center gap-1.5' },
+                  h(Icon, { name: 'sparkles', className: 'w-3.5 h-3.5 text-amber-400' }),
+                  'Commercial Scoping Strategic Rationale'
+                ),
+                h('button', {
+                  onClick: () => setAiRationale(null),
+                  className: 'text-zinc-500 hover:text-zinc-300'
+                }, h(Icon, { name: 'x', className: 'w-3 h-3' }))
+              ),
+              h('p', { className: 'text-zinc-300 leading-relaxed text-[11px]' }, aiRationale)
+            ) : null,
+
+            h('div', { className: 'grid grid-cols-2 sm:grid-cols-4 gap-3' },
+              h('div', { className: 'bg-zinc-900/40 border border-zinc-850 p-3 rounded-xl' },
+                h('span', { className: 'text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block' }, 'Total Price (Inc. 10% PM)'),
+                h('span', { className: 'text-lg font-bold text-amber-400 font-mono tracking-tight mt-0.5 block' }, CURRENCY_SYMBOL + Math.round(metrics.grandTotal).toLocaleString()),
+                h('span', { className: 'text-[10px] text-zinc-500 block' }, 'Base: ' + CURRENCY_SYMBOL + Math.round(metrics.baseSubtotal).toLocaleString())
+              ),
+
+              h('div', { className: 'bg-zinc-900/40 border border-zinc-850 p-3 rounded-xl' },
+                h('div', { className: 'flex justify-between items-center' },
+                  h('span', { className: 'text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block' }, 'Billable Effort'),
+                  h('span', { className: 'text-[10px] bg-zinc-800 text-zinc-300 font-mono px-1.5 py-0.2 rounded' }, metrics.totalUnits + ' units')
+                ),
+                h('span', { className: 'text-lg font-bold text-white tracking-tight mt-0.5 block' }, metrics.totalHours + ' ', h('span', { className: 'text-xs font-normal text-zinc-400' }, 'hrs')),
+                h('span', { className: 'text-[10px] text-zinc-500 block' }, '10% PM: +' + CURRENCY_SYMBOL + Math.round(metrics.totalPmFee).toLocaleString())
+              ),
+
+              h('div', { className: 'bg-zinc-900/40 border border-zinc-850 p-3 rounded-xl' },
+                h('span', { className: 'text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block' }, 'Blended Hourly Rate'),
+                h('span', { className: 'text-lg font-bold text-zinc-200 font-mono tracking-tight mt-0.5 block' }, CURRENCY_SYMBOL + metrics.blendedRate.toFixed(0) + ' ', h('span', { className: 'text-xs font-normal text-zinc-500' }, '/hr')),
+                h('span', { className: 'text-[10px] text-zinc-500 block' }, 'Median: ' + CURRENCY_SYMBOL + rateCardMedian + '/hr')
+              ),
+
+              h('div', { className: 'bg-zinc-900/40 border border-zinc-850 p-3 rounded-xl flex flex-col justify-between' },
+                h('div', null,
+                  h('span', { className: 'text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block' }, 'Resource Mix'),
+                  h('div', { className: 'flex items-center gap-1 text-xs font-mono font-semibold mt-0.5' },
+                    h('span', { className: 'text-purple-300' }, metrics.seniorRatio.toFixed(0) + '%'),
+                    h('span', { className: 'text-zinc-600' }, '/'),
+                    h('span', { className: 'text-blue-300' }, metrics.midRatio.toFixed(0) + '%'),
+                    h('span', { className: 'text-zinc-600' }, '/'),
+                    h('span', { className: 'text-emerald-300' }, metrics.juniorRatio.toFixed(0) + '%')
+                  )
+                ),
+                h('div', { className: 'w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-2 flex' },
+                  h('div', { style: { width: metrics.seniorRatio + '%' }, className: 'bg-purple-400' }),
+                  h('div', { style: { width: metrics.midRatio + '%' }, className: 'bg-blue-400' }),
+                  h('div', { style: { width: metrics.juniorRatio + '%' }, className: 'bg-emerald-400' })
+                )
+              )
+            ),
+
+            h('div', { className: 'bg-zinc-900/60 border border-zinc-850 rounded-xl overflow-hidden shadow-sm' },
+              h('div', { className: 'p-3 border-b border-zinc-850 flex items-center justify-between' },
+                h('div', { className: 'flex items-center gap-2' },
+                  h('span', { className: 'text-xs font-semibold text-white' }, 'Commercial Scope Breakdown'),
+                  h('span', { className: 'text-[11px] text-zinc-500' }, '(' + scopeItems.length + ' deliverables \u2022 ' + metrics.totalUnits + ' units)')
+                ),
+                h('button', {
+                  onClick: () => setIsRateDrawerOpen(true),
+                  className: 'text-xs text-amber-300 px-2.5 py-1 rounded bg-amber-950/40 border border-amber-800/50 flex items-center gap-1 font-medium'
+                }, h(Icon, { name: 'plus', className: 'w-3 h-3' }), 'Add Deliverable')
+              ),
+
+              h('div', { className: 'overflow-x-auto' },
+                h('table', { className: 'w-full text-left text-xs text-zinc-300' },
+                  h('thead', { className: 'bg-zinc-950/60 text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-850' },
+                    h('tr', null,
+                      h('th', { className: 'py-2.5 px-3' }, 'Item & Category'),
+                      h('th', { className: 'py-2.5 px-2' }, 'Tier'),
+                      h('th', { className: 'py-2.5 px-2 text-right' }, 'Bound Rate'),
+                      h('th', { className: 'py-2.5 px-2 text-center' }, 'Qty / Units'),
+                      h('th', { className: 'py-2.5 px-2 text-center' }, 'Unit Hrs'),
+                      h('th', { className: 'py-2.5 px-2 text-center' }, 'Total Hrs'),
+                      h('th', { className: 'py-2.5 px-2 text-right' }, 'Base'),
+                      h('th', { className: 'py-2.5 px-2 text-right' }, '+10% PM'),
+                      h('th', { className: 'py-2.5 px-3 text-right' }, 'Price (AED)'),
+                      h('th', { className: 'py-2.5 px-2 text-center w-7' })
+                    )
+                  ),
+                  h('tbody', { className: 'divide-y divide-zinc-850/60' },
+                    scopeItems.map(item => {
+                      const qty = Math.max(1, Number(item.quantity) || 1);
+                      const unitH = Number(item.unitHours !== undefined ? item.unitHours : item.hours) || 0;
+                      const totalH = unitH * qty;
+                      const baseCost = totalH * (Number(item.hourlyRate) || 0);
+                      const pmFee = Math.round(baseCost * 0.10);
+                      const lineTotal = baseCost + pmFee;
+                      const isUpdated = recentlyUpdatedId === item.id;
+                      const tierBenchmark = getBenchmarkRateForTier(item.seniority);
+                      const isOverridden = item.hourlyRate !== tierBenchmark;
+
+                      return h('tr', { key: item.id, className: 'transition-colors ' + (isUpdated ? 'bg-amber-950/40' : 'hover:bg-zinc-850/30') },
+                        h('td', { className: 'py-2.5 px-3 max-w-[190px]' },
+                          h('select', {
+                            value: item.rateCardId,
+                            onChange: (e) => updateItemDeliverable(item.id, e.target.value),
+                            className: 'w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-1 text-xs text-white truncate'
+                          }, rateCard.map(rc => h('option', { key: rc.id, value: rc.id }, rc.item))),
+                          h('span', { className: 'text-[10px] text-zinc-500 block truncate mt-0.5' }, item.category)
+                        ),
+                        h('td', { className: 'py-2.5 px-2' },
+                          h('select', {
+                            value: item.seniority,
+                            onChange: (e) => updateSeniority(item.id, e.target.value),
+                            className: 'rounded px-2 py-1 text-[10px] font-semibold border ' +
+                              (item.seniority === 'Senior' ? 'bg-purple-950 text-purple-300 border-purple-800' :
+                               item.seniority === 'Mid' ? 'bg-blue-950 text-blue-300 border-blue-800' :
+                               'bg-emerald-950 text-emerald-300 border-emerald-800')
+                          },
+                            h('option', { value: 'Senior' }, 'Senior (' + CURRENCY_SYMBOL + seniorRole.hourlyRate + ')'),
+                            h('option', { value: 'Mid' }, 'Mid (' + CURRENCY_SYMBOL + midRole.hourlyRate + ')'),
+                            h('option', { value: 'Junior' }, 'Junior (' + CURRENCY_SYMBOL + juniorRole.hourlyRate + ')')
+                          )
+                        ),
+                        h('td', { className: 'py-2.5 px-2 text-right' },
+                          h('div', { className: 'flex items-center justify-end gap-1' },
+                            isOverridden ? h('button', {
+                              onClick: () => syncToTierBenchmark(item.id),
+                              className: 'text-[9px] px-1 py-0.5 rounded bg-zinc-800 text-amber-300 font-mono'
+                            }, 'Sync') : null,
+                            h('input', {
+                              type: 'number',
+                              value: item.hourlyRate,
+                              onChange: (e) => updateCustomRate(item.id, e.target.value),
+                              className: 'w-14 text-right bg-transparent border-b border-dashed border-zinc-700 text-xs font-mono font-bold focus:outline-none'
+                            })
+                          )
+                        ),
+                        h('td', { className: 'py-2.5 px-2 text-center' },
+                          h('div', { className: 'inline-flex items-center gap-1 bg-zinc-950 border border-amber-900/40 rounded px-1.5 py-0.5' },
+                            h('button', { onClick: () => updateQuantity(item.id, -1), className: 'text-zinc-500 hover:text-white px-1 font-bold' }, '-'),
+                            h('input', {
+                              type: 'number',
+                              min: 1,
+                              value: qty,
+                              onChange: (e) => setDirectQuantity(item.id, e.target.value),
+                              className: 'w-7 text-center bg-transparent font-mono text-xs font-bold text-amber-300 focus:outline-none'
+                            }),
+                            h('button', { onClick: () => updateQuantity(item.id, 1), className: 'text-zinc-500 hover:text-white px-1 font-bold' }, '+')
+                          )
+                        ),
+                        // 1-hour unit step controller + direct typing
+                        h('td', { className: 'py-2.5 px-2 text-center' },
+                          h('div', { className: 'inline-flex items-center gap-0.5 bg-zinc-950 border border-zinc-800 rounded px-1 py-0.5' },
+                            h('button', { onClick: () => updateUnitHours(item.id, -1), className: 'text-zinc-500 hover:text-white px-1 font-bold' }, '-'),
+                            h('input', {
+                              type: 'number',
+                              min: 1,
+                              value: unitH,
+                              onChange: (e) => setDirectUnitHours(item.id, e.target.value),
+                              className: 'w-7 text-center bg-transparent font-mono text-xs text-zinc-200 font-medium focus:outline-none'
+                            }),
+                            h('button', { onClick: () => updateUnitHours(item.id, 1), className: 'text-zinc-500 hover:text-white px-1 font-bold' }, '+')
+                          )
+                        ),
+                        h('td', { className: 'py-2.5 px-2 text-center font-mono text-xs font-bold text-white' },
+                          totalH, ' ', h('span', { className: 'text-[10px] text-zinc-500 font-normal' }, 'hrs')
+                        ),
+                        h('td', { className: 'py-2.5 px-2 text-right font-mono text-zinc-400' }, baseCost.toLocaleString()),
+                        h('td', { className: 'py-2.5 px-2 text-right font-mono text-amber-500/80' }, '+' + pmFee.toLocaleString()),
+                        h('td', { className: 'py-2.5 px-3 text-right font-mono font-bold text-white' }, lineTotal.toLocaleString()),
+                        h('td', { className: 'py-2.5 px-2 text-center' },
+                          h('button', { onClick: () => removeLineItem(item.id), className: 'text-zinc-600 hover:text-rose-400 p-1' }, h(Icon, { name: 'trash', className: 'w-3 h-3' }))
+                        )
+                      );
+                    })
+                  )
+                )
+              ),
+
+              h('div', { className: 'p-3 border-t border-zinc-850 bg-zinc-950/60 flex items-center justify-between' },
+                h('span', { className: 'text-xs text-zinc-500' }, 'Formula: Units \u00d7 Hours per Item \u00d7 Bound Rate + 10% Project Management fee.'),
+                h('div', { className: 'flex items-center gap-2' },
+                  h('button', {
+                    onClick: () => saveCurrentCommercialRecord('Draft'),
+                    className: 'text-xs text-zinc-300 hover:text-white px-3 py-1.5 rounded bg-zinc-800'
+                  }, 'Save Draft'),
+                  h('button', {
+                    onClick: () => exportToExcel(),
+                    className: 'text-xs bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-3.5 py-1.5 rounded flex items-center gap-1.5 shadow'
+                  }, h(Icon, { name: 'download', className: 'w-3.5 h-3.5' }), 'Export Styled .XLSX')
+                )
+              )
+            )
+          )
+        ) :
+        // TAB 2: RECORDS
+        h('main', { className: 'max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6' },
+          h('div', { className: 'flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-850' },
+            h('div', null,
+              h('div', { className: 'flex items-center gap-2' },
+                h('button', {
+                  onClick: () => setActiveTab('studio'),
+                  className: 'text-xs text-zinc-400 hover:text-white flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-2 py-1 rounded'
+                }, h(Icon, { name: 'back', className: 'w-3 h-3' }), 'Back to Studio'),
+                h('h1', { className: 'text-lg font-bold text-white tracking-tight' }, 'Commercial Submissions Registry')
+              ),
+              h('p', { className: 'text-xs text-zinc-400 mt-1' }, 'Cumulative records of all generated agency fee proposals and scope sheets.')
+            ),
+            h('button', {
+              onClick: exportPortfolioRollup,
+              className: 'text-xs bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-3.5 py-1.5 rounded flex items-center gap-1.5 shadow self-start sm:self-auto'
+            }, h(Icon, { name: 'spreadsheet', className: 'w-3.5 h-3.5' }), 'Download Pipeline Summary (.XLSX)')
+          ),
+
+          // Cards
+          h('div', { className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' },
+            h('div', { className: 'bg-gradient-to-br from-amber-950/40 via-zinc-900/60 to-zinc-900 border border-amber-900/30 p-4 rounded-xl' },
+              h('div', { className: 'flex items-center justify-between text-zinc-400 mb-1' },
+                h('span', { className: 'text-[11px] font-semibold uppercase tracking-wider text-amber-400' }, 'Total Pipeline Value'),
+                h(Icon, { name: 'dollar', className: 'w-4 h-4 text-amber-400' })
+              ),
+              h('div', { className: 'text-2xl font-black text-amber-400 font-mono tracking-tight mt-1' }, CURRENCY_SYMBOL + Math.round(portfolioStats.totalCommercialDollarValue).toLocaleString()),
+              h('div', { className: 'text-[11px] text-zinc-400 mt-1.5 flex justify-between' },
+                h('span', null, 'Base: ' + CURRENCY_SYMBOL + Math.round(portfolioStats.totalBaseValue).toLocaleString()),
+                h('span', { className: 'text-amber-500 font-mono' }, '+10% PM: ' + CURRENCY_SYMBOL + Math.round(portfolioStats.totalPmValue).toLocaleString())
+              )
+            ),
+
+            h('div', { className: 'bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl' },
+              h('div', { className: 'flex items-center justify-between text-zinc-400 mb-1' },
+                h('span', { className: 'text-[11px] font-semibold uppercase tracking-wider text-zinc-300' }, 'Total Billable Hours'),
+                h(Icon, { name: 'clock', className: 'w-4 h-4 text-blue-400' })
+              ),
+              h('div', { className: 'text-2xl font-bold text-white tracking-tight mt-1' }, portfolioStats.totalBillableHours.toLocaleString() + ' ', h('span', { className: 'text-sm font-normal text-zinc-400' }, 'hrs')),
+              h('div', { className: 'text-[11px] text-zinc-400 mt-1.5' }, 'Across ' + portfolioStats.totalCount + ' commercial proposals')
+            ),
+
+            h('div', { className: 'bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl' },
+              h('div', { className: 'flex items-center justify-between text-zinc-400 mb-1' },
+                h('span', { className: 'text-[11px] font-semibold uppercase tracking-wider text-zinc-300' }, 'Blended Rate Realized'),
+                h(Icon, { name: 'trend', className: 'w-4 h-4 text-emerald-400' })
+              ),
+              h('div', { className: 'text-2xl font-bold text-zinc-100 font-mono tracking-tight mt-1' }, CURRENCY_SYMBOL + portfolioStats.overallBlendedRate.toFixed(0) + ' ', h('span', { className: 'text-xs font-normal text-zinc-500' }, '/hr')),
+              h('div', { className: 'text-[11px] text-zinc-400 mt-1.5' }, 'Agency median: ' + CURRENCY_SYMBOL + rateCardMedian + '/hr')
+            ),
+
+            h('div', { className: 'bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between' },
+              h('div', { className: 'flex items-center justify-between text-zinc-400 mb-1' },
+                h('span', { className: 'text-[11px] font-semibold uppercase tracking-wider text-zinc-300' }, 'Proposal Stages'),
+                h(Icon, { name: 'chart', className: 'w-4 h-4 text-purple-400' })
+              ),
+              h('div', { className: 'grid grid-cols-3 gap-1.5 pt-1 text-center font-mono' },
+                h('div', { className: 'bg-emerald-950/40 border border-emerald-900/40 p-1 rounded' },
+                  h('span', { className: 'text-[10px] text-emerald-400 block font-sans' }, 'Won'),
+                  h('span', { className: 'text-xs font-bold text-emerald-300' }, portfolioStats.countApproved)
+                ),
+                h('div', { className: 'bg-blue-950/40 border border-blue-900/40 p-1 rounded' },
+                  h('span', { className: 'text-[10px] text-blue-400 block font-sans' }, 'Presented'),
+                  h('span', { className: 'text-xs font-bold text-blue-300' }, portfolioStats.countPresented)
+                ),
+                h('div', { className: 'bg-zinc-800/50 border border-zinc-700/50 p-1 rounded' },
+                  h('span', { className: 'text-[10px] text-zinc-400 block font-sans' }, 'Review'),
+                  h('span', { className: 'text-xs font-bold text-zinc-300' }, portfolioStats.countReview)
+                )
+              ),
+              h('div', { className: 'text-[10px] text-zinc-500 mt-2 text-right' }, portfolioStats.countDraft + ' drafts')
+            )
+          ),
+
+          // Filters
+          h('div', { className: 'bg-zinc-900/50 border border-zinc-850 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3' },
+            h('div', { className: 'relative flex-1 max-w-md' },
+              h('div', { className: 'absolute left-3 top-2.5 text-zinc-500' }, h(Icon, { name: 'search', className: 'w-3.5 h-3.5' })),
+              h('input', {
+                type: 'text',
+                placeholder: 'Search client name or brief...',
+                value: recordsSearch,
+                onChange: (e) => setRecordsSearch(e.target.value),
+                className: 'w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none'
+              })
+            ),
+            h('div', { className: 'flex items-center gap-2 flex-wrap' },
+              h('span', { className: 'text-[11px] text-zinc-500' }, 'Filter:'),
+              ['ALL', 'Approved', 'Presented', 'Under Review', 'Draft'].map(status => h('button', {
+                key: status,
+                onClick: () => setStatusFilter(status),
+                className: 'text-xs px-2.5 py-1 rounded transition ' +
+                  (statusFilter === status ? 'bg-zinc-100 text-zinc-950 font-bold' : 'bg-zinc-950 text-zinc-400 border border-zinc-800')
+              }, status))
+            )
+          ),
+
+          // Records Table
+          h('div', { className: 'bg-zinc-900/60 border border-zinc-850 rounded-xl overflow-hidden shadow-sm' },
+            h('div', { className: 'overflow-x-auto' },
+              h('table', { className: 'w-full text-left text-xs text-zinc-300' },
+                h('thead', { className: 'bg-zinc-950/70 text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-850' },
+                  h('tr', null,
+                    h('th', { className: 'py-3 px-4' }, 'Client Organization'),
+                    h('th', { className: 'py-3 px-3' }, 'Date'),
+                    h('th', { className: 'py-3 px-3' }, 'Status'),
+                    h('th', { className: 'py-3 px-3 text-center' }, 'Duration'),
+                    h('th', { className: 'py-3 px-3 text-right' }, 'Hours'),
+                    h('th', { className: 'py-3 px-3 text-right' }, 'Blended Rate'),
+                    h('th', { className: 'py-3 px-4 text-right' }, 'Total Price (Inc. 10% PM)'),
+                    h('th', { className: 'py-3 px-4 text-center' }, 'Actions')
+                  )
+                ),
+                h('tbody', { className: 'divide-y divide-zinc-850/60' },
+                  filteredRecords.length === 0 ? h('tr', null,
+                    h('td', { colSpan: 8, className: 'py-8 text-center text-xs text-zinc-500' }, 'No commercial submissions match the search query.')
+                  ) : filteredRecords.map(rec => {
+                    const formattedDate = new Date(rec.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    return h('tr', { key: rec.id, className: 'hover:bg-zinc-850/30 transition' },
+                      h('td', { className: 'py-3.5 px-4 max-w-[240px]' },
+                        h('div', { className: 'font-bold text-white text-xs' }, rec.clientName),
+                        rec.briefSummary ? h('p', { className: 'text-[11px] text-zinc-400 line-clamp-1 mt-0.5' }, rec.briefSummary) : null
+                      ),
+                      h('td', { className: 'py-3.5 px-3 text-zinc-400 font-mono text-[11px] whitespace-nowrap' }, formattedDate),
+                      h('td', { className: 'py-3.5 px-3' },
+                        h('select', {
+                          value: rec.status,
+                          onChange: (e) => updateRecordStatus(rec.id, e.target.value),
+                          className: 'text-[10px] font-semibold px-2 py-0.5 rounded border ' +
+                            (rec.status === 'Approved' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+                             rec.status === 'Presented' ? 'bg-blue-950 text-blue-300 border-blue-800' :
+                             rec.status === 'Under Review' ? 'bg-amber-950 text-amber-300 border-amber-800' :
+                             'bg-zinc-900 text-zinc-400 border-zinc-700')
+                        },
+                          h('option', { value: 'Approved' }, 'Approved'),
+                          h('option', { value: 'Presented' }, 'Presented'),
+                          h('option', { value: 'Under Review' }, 'Under Review'),
+                          h('option', { value: 'Draft' }, 'Draft')
+                        )
+                      ),
+                      h('td', { className: 'py-3.5 px-3 text-center text-zinc-400 text-xs' }, rec.timeline),
+                      h('td', { className: 'py-3.5 px-3 text-right font-mono text-zinc-300' }, rec.totalHours + ' hrs'),
+                      h('td', { className: 'py-3.5 px-3 text-right font-mono text-zinc-300' }, CURRENCY_SYMBOL + Math.round(rec.blendedRate) + '/hr'),
+                      h('td', { className: 'py-3.5 px-4 text-right' },
+                        h('span', { className: 'font-bold font-mono text-amber-400 text-sm' }, CURRENCY_SYMBOL + Math.round(rec.grandTotal).toLocaleString()),
+                        h('span', { className: 'block text-[10px] text-zinc-500 font-mono' }, 'Base: ' + CURRENCY_SYMBOL + Math.round(rec.baseSubtotal).toLocaleString())
+                      ),
+                      h('td', { className: 'py-3.5 px-4 text-center whitespace-nowrap' },
+                        h('div', { className: 'flex items-center justify-center gap-1.5' },
+                          h('button', {
+                            onClick: () => loadCommercialRecord(rec),
+                            className: 'text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2 py-1 rounded flex items-center gap-1 border border-zinc-700'
+                          }, h(Icon, { name: 'folder', className: 'w-3 h-3 text-amber-400' }), 'Load'),
+                          Array.isArray(rec.itemsSnapshot) && rec.itemsSnapshot.length > 0 ? h('button', {
+                            onClick: () => exportToExcel(rec.itemsSnapshot, rec.clientName, rec.timeline),
+                            className: 'text-xs bg-zinc-800 hover:bg-emerald-900/50 text-zinc-300 p-1.5 rounded border border-zinc-700',
+                            title: 'Export Excel'
+                          }, h(Icon, { name: 'spreadsheet', className: 'w-3.5 h-3.5' })) : null,
+                          h('button', {
+                            onClick: () => deleteRecord(rec.id),
+                            className: 'text-zinc-600 hover:text-rose-400 p-1.5 rounded'
+                          }, h(Icon, { name: 'trash', className: 'w-3 h-3' }))
+                        )
+                      )
+                    );
+                  })
+                )
+              )
+            ),
+
+            h('div', { className: 'p-4 border-t border-zinc-850 bg-zinc-950/70 flex items-center justify-between text-xs' },
+              h('div', { className: 'text-zinc-400' },
+                'Showing ', h('strong', { className: 'text-white' }, filteredRecords.length), ' of ', h('strong', { className: 'text-white' }, commercialRecords.length), ' records.'
+              ),
+              h('div', { className: 'flex items-center gap-4 font-mono' },
+                h('div', null,
+                  h('span', { className: 'text-zinc-500 mr-1' }, 'Visible Sum:'),
+                  h('strong', { className: 'text-amber-400 font-bold' },
+                    CURRENCY_SYMBOL + Math.round(filteredRecords.reduce((acc, curr) => acc + (Number(curr.grandTotal) || 0), 0)).toLocaleString()
+                  )
+                ),
+                h('button', {
+                  onClick: () => setActiveTab('studio'),
+                  className: 'bg-zinc-100 hover:bg-white text-zinc-950 font-bold px-3 py-1.5 rounded text-xs'
+                }, 'New Commercial \u2192')
+              )
+            )
+          )
+        ),
+
+        // Drawer
+        isRateDrawerOpen ? h('div', { className: 'fixed inset-0 z-50 flex justify-end' },
+          h('div', { onClick: () => setIsRateDrawerOpen(false), className: 'fixed inset-0 bg-black/70 backdrop-blur-sm' }),
+          h('div', { className: 'relative w-full max-w-2xl bg-zinc-950 border-l border-zinc-800 p-6 shadow-2xl flex flex-col justify-between z-10 overflow-hidden' },
+            h('div', { className: 'flex flex-col h-full overflow-hidden' },
+              h('div', { className: 'flex items-center justify-between pb-3 border-b border-zinc-850' },
+                h('div', null,
+                  h('h3', { className: 'font-bold text-base text-white flex items-center gap-2' },
+                    h(Icon, { name: 'sliders', className: 'w-4 h-4 text-amber-400' }), 'Agency Rate Card Catalog'
+                  ),
+                  h('p', { className: 'text-xs text-zinc-400 mt-0.5' }, 'UAE Agency Services, Baseline Hours, Rates & 10% PM fee')
+                ),
+                h('button', { onClick: () => setIsRateDrawerOpen(false), className: 'text-zinc-400 hover:text-white p-1' }, h(Icon, { name: 'x', className: 'w-4 h-4' }))
+              ),
+
+              h('div', { className: 'mt-3 p-3 bg-zinc-900 border border-zinc-850 rounded-lg flex items-center justify-between gap-2.5' },
+                h('div', { className: 'flex items-center gap-2' },
+                  h('button', {
+                    onClick: () => fileInputRef.current && fileInputRef.current.click(),
+                    className: 'text-xs bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-3 py-1.5 rounded flex items-center gap-1.5'
+                  }, h(Icon, { name: 'upload', className: 'w-3.5 h-3.5' }), 'Upload New Card'),
+                  h('button', {
+                    onClick: downloadRateCardTemplate,
+                    className: 'text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded border border-zinc-700 flex items-center gap-1'
+                  }, h(Icon, { name: 'download', className: 'w-3 h-3 text-zinc-400' }), 'Get Template')
+                ),
+                h('button', {
+                  onClick: resetToOfficialRateCard,
+                  className: 'text-xs text-zinc-400 hover:text-white flex items-center gap-1'
+                }, h(Icon, { name: 'refresh', className: 'w-3 h-3' }), 'Reset')
+              ),
+
+              h('div', { className: 'mt-3 p-3 bg-zinc-900/60 border border-zinc-850 rounded-lg flex items-center justify-between' },
+                h('div', null,
+                  h('span', { className: 'text-xs font-semibold text-zinc-200' }, rateCard.length + ' Services in Catalog'),
+                  h('span', { className: 'text-[11px] text-zinc-400 block' }, 'Currency: United Arab Emirates Dirham (AED)')
+                ),
+                h('div', { className: 'text-right' },
+                  h('span', { className: 'text-[10px] text-zinc-500 uppercase font-semibold block' }, 'Catalog Median'),
+                  h('span', { className: 'text-base font-bold font-mono text-amber-400' }, CURRENCY_SYMBOL + rateCardMedian + '/hr')
+                )
+              ),
+
+              h('div', { className: 'mt-3 grid grid-cols-1 sm:grid-cols-12 gap-2' },
+                h('div', { className: 'sm:col-span-7 relative' },
+                  h('div', { className: 'absolute left-2.5 top-2.5 text-zinc-500' }, h(Icon, { name: 'search', className: 'w-3.5 h-3.5' })),
+                  h('input', {
+                    type: 'text',
+                    placeholder: 'Search service...',
+                    value: drawerSearch,
+                    onChange: (e) => setDrawerSearch(e.target.value),
+                    className: 'w-full bg-zinc-900 border border-zinc-800 rounded pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none'
+                  })
+                ),
+                h('div', { className: 'sm:col-span-5' },
+                  h('select', {
+                    value: selectedCategory,
+                    onChange: (e) => setSelectedCategory(e.target.value),
+                    className: 'w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300'
+                  }, categories.map(c => h('option', { key: c, value: c }, c)))
+                )
+              ),
+
+              h('div', { className: 'mt-3 flex-1 overflow-y-auto space-y-2 pr-1' },
+                filteredRateCard.map(item => {
+                  const base = item.hours * item.hourlyRate;
+                  const pm = Math.round(base * 0.10);
+                  const total = base + pm;
+
+                  return h('div', { key: item.id, className: 'p-3 bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-850 rounded-lg flex flex-col gap-2' },
+                    h('div', { className: 'flex items-start justify-between gap-3' },
+                      h('div', null,
+                        h('div', { className: 'flex items-center gap-2' },
+                          h('span', { className: 'font-semibold text-xs text-white' }, item.item),
+                          h('span', {
+                            className: 'text-[10px] px-1.5 py-0.2 rounded font-mono ' +
+                              (item.seniority === 'Senior' ? 'bg-purple-950 text-purple-300' :
+                               item.seniority === 'Mid' ? 'bg-blue-950 text-blue-300' :
+                               'bg-emerald-950 text-emerald-300')
+                          }, item.seniority)
+                        ),
+                        h('span', { className: 'text-[10px] text-zinc-500 block mt-0.5' }, item.category)
+                      ),
+                      h('button', {
+                        onClick: () => {
+                          addLineItemFromRateCard(item);
+                          setIsRateDrawerOpen(false);
+                        },
+                        className: 'text-[11px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2 py-1 rounded flex items-center gap-1 shrink-0'
+                      }, h(Icon, { name: 'plus', className: 'w-3 h-3' }), 'Insert')
+                    ),
+                    h('p', { className: 'text-[11px] text-zinc-400 line-clamp-2' }, item.description),
+                    h('div', { className: 'flex items-center justify-between pt-2 border-t border-zinc-850/80 text-[11px] font-mono' },
+                      h('span', { className: 'text-zinc-400' }, item.hours + ' hrs @ ' + CURRENCY_SYMBOL + item.hourlyRate + '/hr'),
+                      h('span', { className: 'font-bold text-amber-400' }, CURRENCY_SYMBOL + total.toLocaleString())
+                    )
+                  );
+                })
+              ),
+
+              h('div', { className: 'pt-3 border-t border-zinc-850 mt-2' },
+                h('button', {
+                  onClick: () => setIsRateDrawerOpen(false),
+                  className: 'w-full py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded text-xs font-semibold'
+                }, 'Done')
+              )
+            )
+          )
+        ) : null,
+
+        // AI Settings Modal
+        isAiConfigOpen ? h('div', { className: 'fixed inset-0 z-50 flex items-center justify-center p-4' },
+          h('div', { onClick: () => setIsAiConfigOpen(false), className: 'fixed inset-0 bg-black/75 backdrop-blur-sm' }),
+          h('div', { className: 'relative w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl z-10 space-y-4' },
+            h('div', { className: 'flex items-center justify-between pb-3 border-b border-zinc-800' },
+              h('div', { className: 'flex items-center gap-2' },
+                h('div', { className: 'h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center' },
+                  h(Icon, { name: 'sparkles', className: 'w-4 h-4' })
+                ),
+                h('div', null,
+                  h('h3', { className: 'text-sm font-bold text-white' }, 'AI Scoping Reasoning Engine'),
+                  h('p', { className: 'text-[11px] text-zinc-400' }, 'Powered by Google Gemini 3 Flash')
+                )
+              ),
+              h('button', { onClick: () => setIsAiConfigOpen(false), className: 'text-zinc-400 hover:text-white p-1' },
+                h(Icon, { name: 'x', className: 'w-4 h-4' })
+              )
+            ),
+
+            h('div', { className: 'space-y-3' },
+              h('p', { className: 'text-xs text-zinc-300 leading-relaxed' },
+                'ScopeCraft performs deep commercial reasoning (evaluating timeline intensity, executive visibility, reputation risk, and implied deliverables) rather than simplistic keyword extraction.'
+              ),
+              h('div', null,
+                h('label', { className: 'text-[11px] font-medium text-zinc-400 block mb-1' }, 'Gemini API Key (Optional / Direct)'),
+                h('input', {
+                  type: 'password',
+                  value: geminiApiKey,
+                  onChange: (e) => saveApiKey(e.target.value),
+                  placeholder: 'AIzaSy...',
+                  className: 'w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-amber-500'
+                }),
+                h('span', { className: 'text-[10px] text-zinc-500 block mt-1' },
+                  'Leave empty for environment key, or enter your personal Gemini API key. Stored only in your browser.'
+                )
+              )
+            ),
+
+            h('div', { className: 'pt-3 flex items-center justify-end gap-2' },
+              h('button', {
+                onClick: () => setIsAiConfigOpen(false),
+                className: 'px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-lg text-xs transition'
+              }, 'Save & Close')
+            )
+          )
+        ) : null,
+
+        // Footer
+        h('footer', { className: 'border-t border-zinc-900 py-3 text-center text-[11px] text-zinc-500' },
+          'ScopeCraft Commercial Studio \u2022 Standalone Pure JS Zero-Node Build \u2022 Styled SheetJS .XLSX Export'
+        )
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(h(App));
+  </script>
+</body>
+</html>
